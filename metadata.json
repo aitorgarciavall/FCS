@@ -1,0 +1,8 @@
+{
+  "name": "CF Santpedor Official Web",
+  "description": "The official digital home of CF Santpedor football club, featuring news, team categories, and an AI-powered club assistant.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
