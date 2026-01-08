@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -10,7 +11,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
           <div className="lg:col-span-4 flex flex-col gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-primary flex items-center justify-center text-background-dark">
+              <div className="w-10 h-10 rounded bg-primary flex items-center justify-center text-white">
                 <span className="material-symbols-outlined">sports_soccer</span>
               </div>
               <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">CF Santpedor</span>
@@ -69,7 +70,7 @@ const Footer: React.FC = () => {
                   placeholder="el_teu@email.com"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary dark:text-white"
                 />
-                <button type="button" className="w-full bg-primary py-3 rounded-lg text-sm font-bold text-background-dark hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
+                <button type="button" className="w-full bg-primary py-3 rounded-lg text-sm font-bold text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                   Subscriu-te <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </button>
               </form>

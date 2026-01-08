@@ -33,7 +33,7 @@ const Hero: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <button className="inline-flex h-14 min-w-[200px] items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-background-dark transition-all hover:bg-primary-dark hover:shadow-[0_0_20px_rgba(13,242,89,0.4)] hover:-translate-y-1">
+            <button className="inline-flex h-14 min-w-[200px] items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-bold text-white transition-all hover:bg-primary-dark hover:shadow-[0_0_20px_rgba(0,77,152,0.4)] hover:-translate-y-1">
               Fes-te soci <span className="material-symbols-outlined">arrow_forward</span>
             </button>
             <button className="inline-flex h-14 min-w-[200px] items-center justify-center rounded-lg border border-white/30 bg-white/10 px-8 text-base font-bold text-white backdrop-blur-sm transition-all hover:bg-white/20">

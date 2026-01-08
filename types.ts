@@ -4,7 +4,13 @@ export enum Screen {
   TEAMS = 'TEAMS',
   NEWS = 'NEWS',
   CLUB = 'CLUB',
-  CONTACT = 'CONTACT'
+  CLUB_PRESENTACIO = 'CLUB_PRESENTACIO',
+  CLUB_IDEARI = 'CLUB_IDEARI',
+  CLUB_OBJECTIUS = 'CLUB_OBJECTIUS',
+  CLUB_REGLAMENT = 'CLUB_REGLAMENT',
+  CLUB_ORGANIGRAMA = 'CLUB_ORGANIGRAMA',
+  CONTACT = 'CONTACT',
+  ADMIN = 'ADMIN'
 }
 
 export interface NewsItem {
@@ -14,6 +20,7 @@ export interface NewsItem {
   title: string;
   description: string;
   imageUrl: string;
+  mediaType?: 'image' | 'video';
   linkText: string;
 }
 

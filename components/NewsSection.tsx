@@ -1,38 +1,55 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NewsItem } from '../types';
-
-const newsItems: NewsItem[] = [
-  {
-    id: '1',
-    category: 'Partit',
-    date: 'Oct 24, 2023',
-    title: 'El primer equip s’emporta el derbi',
-    description: 'Un gol d’últim minut assegura els 3 punts en un partit vibrant. L’equip ha demostrat caràcter fins al final.',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGPH8bKA701xuP_4kBf4x4liksS7H8AO9SMFY7J637JfBOF5geAuXFqwYPe51s34fI9VBdu0VcTzo075J_Ikkzb7ejm9kUPEIcNXYjJgrtwFotQagUXwSeKHytOn5gAPze8ivqAxd4Z3hn0Iu9BRZcJ_0Fica6jIHghwyguOBpYqZuHdWwE0111XXoGGqEKHjxJ0RsSphMzwAod5VmYx6EcMgCLZwzXD8RdrtE9MrHIsJftK_1KFB9bK7_x1q5AikVT2lgevBbiek',
-    linkText: 'Llegir crònica'
-  },
-  {
-    id: '2',
-    category: 'Acadèmia',
-    date: 'Oct 20, 2023',
-    title: 'Proves de selecció 2024/25',
-    description: 'Busquem el pròxim talent. Obre la inscripció per a equips d’Infantil fins a Cadet. Vine a gaudir del futbol.',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB0u17tWllZSWX7CEVLjX24rpgy3g6B82eChJB8l9qa4kbXcYqD4bG2XpIUguwfgdoWPXyWVqMSKPoHlx5b3hlcmcd5SiwQIJznimXxV8ay2aVxYTgHjfMT9FA-IIgMKvlY2tlqcO_ToaQ4gsslHrH2o-jgePYCb_WG_dPGnf5S_w_BhY2WJaqnSDa0bLiK0tRlWnCW_m1s7CtzeiJFUXipSpRtXrK2C4mWXI-nGX_ODv7ueKwaepAvzPitAlq002vcTP3rHUI6XmU',
-    linkText: 'Inscriu-te ara'
-  },
-  {
-    id: '3',
-    category: 'Events',
-    date: 'Oct 15, 2023',
-    title: 'Sopar de Gala de Fi de Temporada',
-    description: 'Ens trobem aquest divendres per celebrar els èxits de tots els nostres equips. Serà una nit inoblidable.',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJGJzQ9E5rfQm4AGOzpWl0ZIf34mNN9ooMH3-9n1uWDemZKDnqK24QwEd81yi2sTSrrcm0UqeDh9solFrOEfYGqy2Jo43Ph8WKjF8jdnJYgFsarvKYEYtZ5igroKToZPzG6URBKIk3x7oyvY7zAq8EO2okg2Tg0WwjGCguw7I6mFCMWMcroLRpkzNggCE3UBS_H0KZUWyIZ8r5LUjKoMr8RqvgAR8rNS0_9a5-W1Mi9HAUwWS_TGT6ejpKZxH1522BjoZrjup7pI0',
-    linkText: 'Reserva tiquet'
-  }
-];
+import { NewsService } from '../services/newsService';
 
 const NewsSection: React.FC = () => {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoading(true); // Reset loading state on retry
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 8000)
+      );
+
+      try {
+        // Race between the fetch and the timeout
+        const data = await Promise.race([
+          NewsService.getAll(),
+          timeoutPromise
+        ]) as NewsItem[];
+        
+        setNews(data);
+      } catch (error) {
+        console.error("Error carregant notícies:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-20 px-4 md:px-10 max-w-7xl mx-auto text-center">
+        <div className="animate-pulse space-y-8">
+          <div className="h-10 bg-gray-200 dark:bg-white/5 w-1/3 mx-auto rounded-lg"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map(i => <div key={i} className="h-64 bg-gray-200 dark:bg-white/5 rounded-xl"></div>)}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Si no hi ha notícies encara
+  if (news.length === 0) return null;
+
   return (
     <section className="py-20 px-4 md:px-10 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
@@ -49,17 +66,33 @@ const NewsSection: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {newsItems.map((item) => (
+        {news.map((item) => (
           <article key={item.id} className="group flex flex-col bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-transparent hover:border-primary/30">
             <div className="relative aspect-video overflow-hidden">
               <div className="absolute top-3 left-3 z-10">
-                <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider text-background-dark bg-primary rounded-md">{item.category}</span>
+                <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider text-white bg-primary rounded-md">{item.category}</span>
               </div>
-              <img 
-                src={item.imageUrl} 
-                alt={item.title} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
+              
+              {item.mediaType === 'video' ? (
+                <div className="relative w-full h-full">
+                  <video 
+                    src={item.imageUrl} 
+                    className="w-full h-full object-cover"
+                    muted
+                    onMouseOver={e => (e.target as HTMLVideoElement).play()}
+                    onMouseOut={e => (e.target as HTMLVideoElement).pause()}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
+                    <span className="material-symbols-outlined text-white text-5xl opacity-80">play_circle</span>
+                  </div>
+                </div>
+              ) : (
+                <img 
+                  src={item.imageUrl || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80'} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              )}
             </div>
             <div className="p-6 flex flex-col flex-grow">
               <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
