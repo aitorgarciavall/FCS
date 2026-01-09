@@ -36,3 +36,21 @@ export interface Message {
   role: 'user' | 'model';
   text: string;
 }
+
+export interface Role {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  phone_number?: string;
+  is_active?: boolean;
+  created_at?: string;
+  roles?: Role[]; // Per mostrar els rols a la interfície
+}

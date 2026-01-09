@@ -15,7 +15,7 @@ export const useUserRoles = (userId: string | undefined) => {
         .from('user_roles')
         .select(`
           roles (
-            name
+            code
           )
         `)
         .eq('user_id', userId);
@@ -27,8 +27,8 @@ export const useUserRoles = (userId: string | undefined) => {
 
       // Aplanar l'estructura i filtrar nuls
       const roles = data
-        .map((item: any) => item.roles?.name)
-        .filter((name: string) => name);
+        .map((item: any) => item.roles?.code)
+        .filter((code: string) => code);
 
       return roles as string[];
     },

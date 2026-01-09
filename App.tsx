@@ -20,6 +20,8 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminNews from './components/admin/AdminNews';
 import AdminTeams from './components/admin/AdminTeams';
+import AdminUsers from './components/admin/AdminUsers';
+import AdminUserNew from './components/admin/AdminUserNew';
 
 // Home Page Component
 const Home: React.FC = () => (
@@ -77,6 +79,8 @@ const App: React.FC = () => {
             <Route index element={<AdminDashboard />} />
             <Route path="news" element={<AdminNews />} />
             <Route path="teams" element={<AdminTeams />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="users/new" element={<AdminUserNew />} />
           </Route>
         </Routes>
       </main>

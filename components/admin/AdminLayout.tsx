@@ -102,6 +102,14 @@ const AdminLayout: React.FC = () => {
           >
             <span className="material-symbols-outlined">groups</span> Equips
           </Link>
+          {(roles.includes('SUPER_ADMIN') || roles.includes('COORDINATOR')) && (
+            <Link
+              to="/keyper/users"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/users') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">manage_accounts</span> Usuaris
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
