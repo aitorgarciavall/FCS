@@ -7,10 +7,13 @@ const Hero: React.FC = () => {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
         <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-transparent to-black/30"></div>
-        <img 
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAniP88WjXbMwG7yHN6m4VHMM7kg0LJIaeBNvyjrBGE6-0qiIUxvn-EFk5PgCU1OLfolUcN5idHXK-gW-OzNAlCYIi3atZgOE8U-2m05KfbG4JQQ6zFjYhI_SjQmc9GiGj94tOd5QqVJG8PO5p_Zm_TPHi2z0pKT7fjsNHDqmbSrN4nbsX7Ho0EEjL7KpQMA7PfjlUR7sIUE-kO599TYMqCotprMv7kCxLy1kzUnUKGFqy_EsiD-tO5_4aoPMyqsnfndoGIvUbzpBk"
-          alt="Football team"
-          className="h-full w-full object-cover transition-transform duration-[20s] hover:scale-105"
+        <div 
+          className="h-full w-full bg-cover bg-center bg-fixed transition-transform duration-[20s] hover:scale-105"
+          style={{
+            backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAniP88WjXbMwG7yHN6m4VHMM7kg0LJIaeBNvyjrBGE6-0qiIUxvn-EFk5PgCU1OLfolUcN5idHXK-gW-OzNAlCYIi3atZgOE8U-2m05KfbG4JQQ6zFjYhI_SjQmc9GiGj94tOd5QqVJG8PO5p_Zm_TPHi2z0pKT7fjsNHDqmbSrN4nbsX7Ho0EEjL7KpQMA7PfjlUR7sIUE-kO599TYMqCotprMv7kCxLy1kzUnUKGFqy_EsiD-tO5_4aoPMyqsnfndoGIvUbzpBk')`
+          }}
+          role="img"
+          aria-label="Football team"
         />
       </div>
 
