@@ -57,7 +57,7 @@ export const NewsService = {
   },
 
   // 3. Crear notícia
-  create: async (news: Omit<NewsItem, 'id' | 'date' | 'linkText'>, file?: File) => {
+  create: async (news: Omit<NewsItem, 'id' | 'date' | 'linkText'>, file?: File, authorId?: string) => {
     let mediaUrl = news.imageUrl;
     let mediaType = news.mediaType || 'image';
 
@@ -77,7 +77,8 @@ export const NewsService = {
         category: news.category,
         media_url: mediaUrl,
         media_type: mediaType,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        author_id: authorId
       });
 
     if (error) throw error;

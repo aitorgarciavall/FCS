@@ -5,7 +5,7 @@ import { NewsService } from '../../services/newsService';
 import { useAuth } from '../../hooks/useAuth';
 
 const AdminNews: React.FC = () => {
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const queryClient = useQueryClient();
   
   // Estats locals per UI (edició, formularis)
@@ -36,7 +36,7 @@ const AdminNews: React.FC = () => {
           description: currentNewsItem.description || '',
           category: currentNewsItem.category || 'Club',
           imageUrl: currentNewsItem.imageUrl || '',
-        }, selectedFile || undefined);
+        }, selectedFile || undefined, user?.id);
       }
     },
     onSuccess: () => {
