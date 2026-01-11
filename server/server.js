@@ -27,6 +27,11 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  global: {
+    headers: {
+      Authorization: `Bearer ${supabaseServiceKey}`
+    }
   }
 });
 
@@ -52,10 +57,29 @@ app.post('/api/admin/create-user', async (req, res) => {
 
     if (authError) throw authError;
 
-        const userId = authData.user.id;
-    
-        // 2. Assignar el rol a la taula 'user_roles'
-        if (role && role > 0) {
+    console.log('✅ Usuari creat a Auth amb ID:', authData.user.id);
+    const userId = authData.user.id;
+
+    // 1.5. Inserir l'usuari a la taula pública 'users' per satisfer la Foreign Key
+    // Això és necessari si no tens un Trigger automàtic configurat a la BDD
+    console.log('👤 Creant perfil públic a la taula users...');
+    const { error: profileError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        id: userId,
+        email: email,
+        full_name: fullName,
+        // Altres camps per defecte si cal
+        is_active: true
+      });
+
+    if (profileError) {
+      console.warn('⚠️ Error creant perfil públic (potser ja existeix pel trigger?):', profileError.message);
+      // Continuem igualment per si l'error és que ja existeix
+    }
+
+    // 2. Assignar el rol a la taula 'user_roles'
+    if (role && role > 0) {
            console.log(`Assignant rol ${role} a l'usuari ${userId}...`);
            
            const { error: roleError } = await supabaseAdmin

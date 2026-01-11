@@ -61,10 +61,21 @@ const AdminNews: React.FC = () => {
     }
   });
 
-  const canEditNews = () => hasRole('SUPER_ADMIN') || hasRole('COORDINATOR');
+  const canEditNews = () => hasRole('SUPER_ADMIN') || hasRole('COORDINATOR') || hasRole('COACH');
+
+  if (!canEditNews()) {
+    return (
+      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+        <span className="material-symbols-outlined text-4xl mb-2 text-red-500">block</span>
+        <h2 className="text-xl font-bold dark:text-white mb-2">Accés Denegat</h2>
+        <p>No tens permisos per gestionar les notícies.</p>
+      </div>
+    );
+  }
 
   const handleEditNews = (item: NewsItem) => {
-    if (!canEditNews()) return alert("No tens permisos.");
+    // La comprovació ja està feta a l'inici, però la mantenim per seguretat
+    if (!canEditNews()) return alert("No tens permisos."); 
     setCurrentNewsItem(item);
     setIsEditing(true);
     setSelectedFile(null);
