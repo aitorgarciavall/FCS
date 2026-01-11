@@ -115,12 +115,39 @@ app.post('/api/admin/create-user', async (req, res) => {
 // Eliminar usuari (Admin)
 app.delete('/api/admin/delete-user/:id', async (req, res) => {
   const { id } = req.params;
+  console.log(`🗑️ Rebuda petició per esborrar usuari: ${id}`);
 
   try {
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
-    if (error) throw error;
+    // 1. Intentar esborrar de Supabase Auth
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+    
+    if (authError) {
+        // Si l'error és que no es troba, potser ja s'havia esborrat d'Auth i és un "zombie" a public
+        if (authError.status === 404 || authError.code === 'user_not_found') {
+            console.warn('⚠️ Usuari no trobat a Auth. Procedint a netejar de public.users...');
+        } else {
+            throw authError;
+        }
+    } else {
+        console.log('✅ Usuari esborrat de Auth.');
+    }
 
-    res.json({ success: true, message: 'Usuari eliminat correctament' });
+    // 2. Assegurar esborrat de la taula pública 'users'
+    // Això és crucial si no hi ha CASCADE configurat a la BDD
+    const { error: publicError } = await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('id', id);
+
+    if (publicError) {
+        console.error('❌ Error esborrant de public.users:', publicError);
+        throw publicError;
+    }
+    
+    console.log('✅ Usuari esborrat de public.users.');
+
+    res.json({ success: true, message: 'Usuari eliminat correctament de tots els registres.' });
+
   } catch (error) {
     console.error('Error eliminant usuari:', error);
     res.status(400).json({ success: false, error: error.message });

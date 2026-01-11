@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserService } from '../../services/userService';
+import { adminService } from '../../services/adminService';
 import { User, Role } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -26,59 +27,32 @@ const AdminUsers: React.FC = () => {
       // 2. Mutations
 
       const updateMutation = useMutation({
-
         mutationFn: ({ id, data }: { id: string; data: Partial<User> }) => 
-
           UserService.updateUser(id, data),
-
         onSuccess: () => {
-
           queryClient.invalidateQueries({ queryKey: ['users'] });
-
           setIsEditing(false);
-
           setSelectedUser(null);
-
         },
-
         onError: (err) => alert(`Error actualitzant usuari: ${err}`)
-
       });
 
-  
-
     const assignRoleMutation = useMutation({
-
       mutationFn: ({ userId, roleId }: { userId: string; roleId: number }) =>
-
         UserService.assignRole(userId, roleId),
-
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] })
-
     });
-
-  
 
     const removeRoleMutation = useMutation({
-
       mutationFn: ({ userId, roleId }: { userId: string; roleId: number }) =>
-
         UserService.removeRole(userId, roleId),
-
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] })
-
     });
 
-  
-
     const deleteUserMutation = useMutation({
-
-      mutationFn: UserService.deleteUser,
-
+      mutationFn: adminService.deleteUser, // Utilitzem el backend segur
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
-
       onError: (err) => alert(`Error esborrant usuari: ${err}`)
-
     });
 
   
