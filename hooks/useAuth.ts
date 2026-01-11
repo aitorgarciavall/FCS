@@ -8,7 +8,10 @@ export const useAuth = () => {
   const { user, loading: authLoading } = useAuthContext();
   
   // Si no hi ha usuari, no cal buscar rols
-  const { data: roles = [], isLoading: rolesLoading } = useUserRoles(user?.id);
+  const { data: rolesData = [], isLoading: rolesLoading } = useUserRoles(user?.id);
+
+  // Transformem els objectes de rol a una llista simple de codis (strings)
+  const roles = rolesData.map((r: any) => r.code);
 
   const isAdmin = () => {
     return roles.includes('SUPER_ADMIN') || 

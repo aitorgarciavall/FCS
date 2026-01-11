@@ -17,9 +17,15 @@ const AdminLayout: React.FC = () => {
   };
 
   // Helpers de rols
-  const isAdmin = roles.includes('SUPER_ADMIN') || 
-                  roles.includes('ADMIN') || 
-                  roles.includes('Administrador Global');
+  const hasAccess = roles.length > 0;
+  const roleIds = roles.map(r => r.id);
+  const roleCodes = roles.map(r => r.code);
+
+  console.log('[AdminLayout] Debug Roles:', { roles, roleIds, roleCodes });
+  
+  const canManageNews = roleIds.some(id => [1, 2, 3, 4].includes(id));
+  const canManageUsers = roleIds.some(id => [1, 2].includes(id));
+  const isSuperAdmin = roleCodes.includes('SUPER_ADMIN');
 
   // 1. CARREGANT TOTAL (Auth o Rols)
   // Si estem verificant sessió O estem verificant rols -> Spinner
@@ -40,17 +46,17 @@ const AdminLayout: React.FC = () => {
   }
 
   // 3. LOGAT PERÒ SENSE PERMISOS -> Accés Denegat
-  if (!isAdmin) {
+  if (!hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-background-dark p-4">
         <div className="bg-white dark:bg-surface-dark p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-gray-200 dark:border-white/10">
           <span className="material-symbols-outlined text-red-500 text-5xl mb-4">lock_person</span>
           <h2 className="text-2xl font-bold dark:text-white mb-2">Accés Denegat</h2>
-          <p className="text-gray-500 mb-6">L'usuari {user.email} no té permisos d'administrador.</p>
+          <p className="text-gray-500 mb-6">L'usuari {user.email} no té cap rol assignat.</p>
           <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-lg mb-6 text-left text-xs text-gray-400">
             <p className="font-bold mb-1">Diagnòstic:</p>
             <p>ID: {user.id}</p>
-            <p>Rols detectats: {roles.length > 0 ? roles.join(', ') : 'Cap'}</p>
+            <p>Rols detectats: Cap</p>
           </div>
           <button 
             onClick={handleLogout}
@@ -76,8 +82,8 @@ const AdminLayout: React.FC = () => {
           <p className="text-xs text-gray-500 truncate">{user.email}</p>
           <div className="mt-2 flex gap-1 flex-wrap">
             {roles.map(role => (
-              <span key={role} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">
-                {role === 'Administrador Global' ? 'Global' : role}
+              <span key={role.id} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">
+                {role.code === 'Administrador Global' ? 'Global' : role.code}
               </span>
             ))}
           </div>
@@ -90,19 +96,21 @@ const AdminLayout: React.FC = () => {
           >
             <span className="material-symbols-outlined">dashboard</span> Tauler
           </Link>
-          <Link
-            to="/keyper/news"
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/news') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-          >
-            <span className="material-symbols-outlined">newspaper</span> Notícies
-          </Link>
+          {canManageNews && (
+            <Link
+              to="/keyper/news"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/news') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">newspaper</span> Notícies
+            </Link>
+          )}
           <Link
             to="/keyper/teams"
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/teams') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
           >
             <span className="material-symbols-outlined">groups</span> Equips
           </Link>
-          {(roles.includes('SUPER_ADMIN') || roles.includes('COORDINATOR')) && (
+          {canManageUsers && (
             <Link
               to="/keyper/users"
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/users') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}

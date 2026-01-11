@@ -15,6 +15,7 @@ export const useUserRoles = (userId: string | undefined) => {
         .from('user_roles')
         .select(`
           roles (
+            id,
             code
           )
         `)
@@ -27,10 +28,13 @@ export const useUserRoles = (userId: string | undefined) => {
 
       // Aplanar l'estructura i filtrar nuls
       const roles = data
-        .map((item: any) => item.roles?.code)
-        .filter((code: string) => code);
+        .map((item: any) => ({
+          id: item.roles?.id,
+          code: item.roles?.code
+        }))
+        .filter((role: any) => role.code);
 
-      return roles as string[];
+      return roles as { id: number, code: string }[];
     },
     // Només s'executa si tenim userId
     enabled: !!userId,

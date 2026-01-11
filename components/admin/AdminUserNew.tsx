@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { adminService } from '../../services/adminService';
 import { UserService } from '../../services/userService';
 import { User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
@@ -26,7 +27,12 @@ const AdminUserNew: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => UserService.createUserFull(data),
+    mutationFn: (data: any) => adminService.createUser({
+      email: data.email,
+      password: data.password,
+      fullName: data.full_name,
+      role: data.role_id
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       navigate('/keyper/users');
@@ -133,7 +139,7 @@ const AdminUserNew: React.FC = () => {
 
           <div className="pt-4 border-t border-gray-100 dark:border-white/10">
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-200 mb-4">
-              <p><strong>Nota:</strong> Aquesta acció crearà un usuari d'accés (Auth) i el seu perfil. Requereix que la Edge Function 'create-user' estigui desplegada.</p>
+              <p><strong>Nota:</strong> Aquesta acció crearà un usuari d'accés (Auth) i el seu perfil utilitzant el nostre servidor segur.</p>
             </div>
             <div className="flex justify-end gap-3">
               <button type="button" onClick={() => navigate('/keyper/users')} className="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-lg">Cancel·lar</button>
