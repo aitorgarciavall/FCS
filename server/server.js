@@ -163,7 +163,7 @@ app.post('/api/admin/create-user', async (req, res) => {
 // Actualitzar usuari (Admin)
 app.put('/api/admin/update-user/:id', async (req, res) => {
   const { id } = req.params;
-  const { email, password, fullName, phone_number, is_active, roles } = req.body;
+  const { email, password, fullName, phone_number, is_active, roles, teams } = req.body;
 
   console.log(`📝 Actualitzant usuari ${id}...`);
 
@@ -223,6 +223,30 @@ app.put('/api/admin/update-user/:id', async (req, res) => {
         if (roleError) throw roleError;
       }
       console.log('✅ Rols actualitzats.');
+    }
+
+    // 4. Actualitzar Equips (si s'especifica)
+    // Només rellevant si l'usuari és jugador, però ho gestionem genèricament aquí
+    if (teams !== undefined && Array.isArray(teams)) {
+        console.log(`⚽ Actualitzant equips per a usuari ${id}...`);
+        
+        // Esborrar assignacions actuals
+        await supabaseAdmin.from('team_players').delete().eq('user_id', id);
+
+        // Inserir noves assignacions
+        if (teams.length > 0) {
+            const teamsToInsert = teams.map(teamId => ({
+                user_id: id,
+                team_id: teamId
+            }));
+
+            const { error: teamError } = await supabaseAdmin
+                .from('team_players')
+                .insert(teamsToInsert);
+            
+            if (teamError) throw teamError;
+        }
+        console.log('✅ Equips actualitzats.');
     }
 
     res.json({ success: true, message: 'Usuari actualitzat correctament.' });

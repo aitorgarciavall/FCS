@@ -74,7 +74,24 @@ export const UserService = {
       }
 
       const roles = roleData.map((r: any) => r.roles).filter((r: any) => r);
-      return { ...user, roles };
+
+      // Obtenir equips (si n'hi ha)
+      const { data: teamData, error: teamError } = await supabase
+        .from('team_players')
+        .select(`
+          teams (
+            id,
+            name
+          )
+        `)
+        .eq('user_id', user.id);
+
+      let teams: { id: string, name: string }[] = [];
+      if (!teamError && teamData) {
+        teams = teamData.map((t: any) => t.teams).filter((t: any) => t);
+      }
+
+      return { ...user, roles, teams };
   },
 
   // Obtenir tots els rols disponibles

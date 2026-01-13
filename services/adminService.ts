@@ -6,6 +6,7 @@ export interface CreateUserData {
   password?: string; // Opcional, si volem que la generi el servidor o s'enviï un enllaç
   fullName: string;
   roles: number[];
+  teams?: string[];
 }
 
 export const adminService = {

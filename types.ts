@@ -53,4 +53,5 @@ export interface User {
   is_active?: boolean;
   created_at?: string;
   roles?: Role[]; // Per mostrar els rols a la interfície
+  teams?: { id: string, name: string }[]; // Equips assignats
 }
