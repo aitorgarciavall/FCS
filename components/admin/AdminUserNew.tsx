@@ -17,7 +17,7 @@ const AdminUserNew: React.FC = () => {
     full_name: '',
     phone_number: '',
     is_active: true,
-    role_id: 0 // Rol inicial (opcional)
+    role_ids: [] as number[] // Rols inicials (opcional)
   });
 
   // Obtenir rols per al selector
@@ -31,7 +31,7 @@ const AdminUserNew: React.FC = () => {
       email: data.email,
       password: data.password,
       fullName: data.full_name,
-      role: data.role_id
+      roles: data.role_ids
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -112,17 +112,32 @@ const AdminUserNew: React.FC = () => {
             </div>
 
              <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol Inicial</label>
-              <select 
-                className="w-full px-4 py-2 rounded-lg border dark:bg-white/5 dark:border-white/10 dark:text-white"
-                value={formData.role_id}
-                onChange={e => setFormData({...formData, role_id: Number(e.target.value)})}
-              >
-                <option value={0}>-- Cap rol --</option>
-                {allRoles.map(role => (
-                  <option key={role.id} value={role.id}>{role.name}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rols Inicials</label>
+              <div className="flex flex-wrap gap-2">
+                {allRoles.map(role => {
+                  const isSelected = formData.role_ids.includes(role.id);
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => {
+                        const newRoles = isSelected
+                          ? formData.role_ids.filter(id => id !== role.id)
+                          : [...formData.role_ids, role.id];
+                        setFormData({ ...formData, role_ids: newRoles });
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                        isSelected
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-300 dark:border-white/10 dark:hover:bg-white/20'
+                      }`}
+                    >
+                      {role.name}
+                      {isSelected && <span className="ml-2 material-symbols-outlined text-[16px] align-text-bottom">check</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="col-span-2 flex items-center gap-2">

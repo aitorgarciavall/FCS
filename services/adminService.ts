@@ -5,7 +5,7 @@ export interface CreateUserData {
   email: string;
   password?: string; // Opcional, si volem que la generi el servidor o s'enviï un enllaç
   fullName: string;
-  role: string;
+  roles: number[];
 }
 
 export const adminService = {

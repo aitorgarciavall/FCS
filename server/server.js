@@ -44,7 +44,7 @@ app.get('/', (req, res) => {
 
 // Crear nou usuari (Admin)
 app.post('/api/admin/create-user', async (req, res) => {
-  const { email, password, fullName, role } = req.body;
+  const { email, password, fullName, roles } = req.body;
 
   try {
     let authData;
@@ -125,34 +125,35 @@ app.post('/api/admin/create-user', async (req, res) => {
       // Continuem igualment per si l'error és que ja existeix
     }
 
-    // 2. Assignar el rol a la taula 'user_roles'
-    if (role && role > 0) {
-           console.log(`Assignant rol ${role} a l'usuari ${userId}...`);
-           
-           const { error: roleError } = await supabaseAdmin
-            .from('user_roles')
-            .insert({
-              user_id: userId,
-              role_id: role
-            });
-    
-           if (roleError) {
-             console.warn('Usuari creat però ha fallat l\'assignació de rol:', roleError);
-             // No llancem error fatal perquè l'usuari ja existeix, però ho notifiquem
-             return res.status(201).json({ 
-               success: true, 
-               message: 'Usuari creat, però hi ha hagut un error assignant el rol.', 
-               user: authData.user,
-               roleError: roleError
-             });
-           }
-        }
-    
-        res.status(201).json({ 
+    // 2. Assignar els rols a la taula 'user_roles'
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      console.log(`Assignant rols [${roles.join(', ')}] a l'usuari ${userId}...`);
+      
+      const rolesToInsert = roles.map(roleId => ({
+        user_id: userId,
+        role_id: roleId
+      }));
+
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert(rolesToInsert);
+
+      if (roleError) {
+        console.warn('Usuari creat però ha fallat l\'assignació de rols:', roleError);
+        return res.status(201).json({ 
           success: true, 
-          message: 'Usuari creat i rol assignat correctament', 
-          user: authData.user 
+          message: 'Usuari creat, però hi ha hagut un error assignant els rols.', 
+          user: authData.user,
+          roleError: roleError
         });
+      }
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Usuari creat i rols assignats correctament', 
+      user: authData.user 
+    });
   } catch (error) {
     console.error('Error creant usuari:', error);
     res.status(400).json({ success: false, error: error.message });
@@ -162,7 +163,7 @@ app.post('/api/admin/create-user', async (req, res) => {
 // Actualitzar usuari (Admin)
 app.put('/api/admin/update-user/:id', async (req, res) => {
   const { id } = req.params;
-  const { email, password, fullName, phone_number, is_active, role } = req.body;
+  const { email, password, fullName, phone_number, is_active, roles } = req.body;
 
   console.log(`📝 Actualitzant usuari ${id}...`);
 
@@ -204,17 +205,20 @@ app.put('/api/admin/update-user/:id', async (req, res) => {
     }
 
     // 3. Actualitzar Rols (si s'especifica)
-    // Nota: El frontend ha d'enviar role: -1 per treure tots els rols, o un ID > 0 per assignar-ne un.
-    // O simplement enviar l'ID del rol principal. Aquí farem una lògica simple: substituir rol.
-    if (role !== undefined) {
-      // Primer esborrem rols existents
+    if (roles !== undefined && Array.isArray(roles)) {
+      // Primer esborrem tots els rols existents per aquest usuari
       await supabaseAdmin.from('user_roles').delete().eq('user_id', id);
       
-      // Si el rol és valid (>0), l'inserim
-      if (role > 0) {
+      // Si hi ha rols seleccionats, els inserim
+      if (roles.length > 0) {
+        const rolesToInsert = roles.map(roleId => ({
+          user_id: id,
+          role_id: roleId
+        }));
+
         const { error: roleError } = await supabaseAdmin
           .from('user_roles')
-          .insert({ user_id: id, role_id: role });
+          .insert(rolesToInsert);
         
         if (roleError) throw roleError;
       }

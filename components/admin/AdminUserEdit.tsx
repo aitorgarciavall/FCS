@@ -17,7 +17,7 @@ const AdminUserEdit: React.FC = () => {
     full_name: '',
     phone_number: '',
     is_active: true,
-    role_id: 0
+    role_ids: [] as number[]
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +41,7 @@ const AdminUserEdit: React.FC = () => {
             full_name: user.full_name || '',
             phone_number: user.phone_number || '',
             is_active: user.is_active || false,
-            role_id: user.roles && user.roles.length > 0 ? user.roles[0].id : 0
+            role_ids: user.roles ? user.roles.map(r => r.id) : []
           });
         }
       } catch (error) {
@@ -64,7 +64,7 @@ const AdminUserEdit: React.FC = () => {
       fullName: data.full_name,
       phone_number: data.phone_number,
       is_active: data.is_active,
-      role: data.role_id
+      roles: data.role_ids
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -157,18 +157,33 @@ const AdminUserEdit: React.FC = () => {
             </div>
 
              <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rol Principal</label>
-              <select 
-                className="w-full px-4 py-2 rounded-lg border dark:bg-white/5 dark:border-white/10 dark:text-white"
-                value={formData.role_id}
-                onChange={e => setFormData({...formData, role_id: Number(e.target.value)})}
-              >
-                <option value={0}>-- Sense Rol --</option>
-                {allRoles.map(role => (
-                  <option key={role.id} value={role.id}>{role.name}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">Assignar un rol aquí substituirà els rols actuals de l'usuari.</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rols Assignats (Etiquetes)</label>
+              <div className="flex flex-wrap gap-2">
+                {allRoles.map(role => {
+                  const isSelected = formData.role_ids.includes(role.id);
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => {
+                        const newRoles = isSelected
+                          ? formData.role_ids.filter(id => id !== role.id)
+                          : [...formData.role_ids, role.id];
+                        setFormData({ ...formData, role_ids: newRoles });
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                        isSelected
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-300 dark:border-white/10 dark:hover:bg-white/20'
+                      }`}
+                    >
+                      {role.name}
+                      {isSelected && <span className="ml-2 material-symbols-outlined text-[16px] align-text-bottom">check</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Selecciona un o més rols per a aquest usuari.</p>
             </div>
 
             <div className="col-span-2 flex items-center gap-2 pt-2">
