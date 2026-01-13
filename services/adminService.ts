@@ -38,6 +38,32 @@ export const adminService = {
   },
 
   /**
+   * Actualitza un usuari existent mitjançant el servidor backend
+   */
+  updateUser: async (userId: string, userData: Partial<CreateUserData> & { phone_number?: string, is_active?: boolean }) => {
+    try {
+      const response = await fetch(`${API_URL}/update-user/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error desconegut actualitzant l\'usuari');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error al servei adminService.updateUser:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Elimina un usuari mitjançant el servidor backend
    */
   deleteUser: async (userId: string) => {

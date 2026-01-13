@@ -22,6 +22,7 @@ import AdminNews from './components/admin/AdminNews';
 import AdminTeams from './components/admin/AdminTeams';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminUserNew from './components/admin/AdminUserNew';
+import AdminUserEdit from './components/admin/AdminUserEdit';
 
 // Home Page Component
 const Home: React.FC = () => (
@@ -81,6 +82,7 @@ const App: React.FC = () => {
             <Route path="teams" element={<AdminTeams />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/new" element={<AdminUserNew />} />
+            <Route path="users/edit/:userId" element={<AdminUserEdit />} />
           </Route>
         </Routes>
       </main>

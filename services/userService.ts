@@ -44,6 +44,39 @@ export const UserService = {
     return usersWithRoles;
   },
 
+  // Obtenir un usuari per ID
+  getUserById: async (id: string): Promise<User | null> => {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (userError) throw userError;
+    if (!user) return null;
+
+    // Obtenir rols
+    const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select(`
+          roles (
+            id,
+            code,
+            name,
+            description
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (roleError) {
+        console.error('Error fetching roles for user', user.id, roleError);
+        return { ...user, roles: [] };
+      }
+
+      const roles = roleData.map((r: any) => r.roles).filter((r: any) => r);
+      return { ...user, roles };
+  },
+
   // Obtenir tots els rols disponibles
   getAllRoles: async (): Promise<Role[]> => {
     const { data, error } = await supabase

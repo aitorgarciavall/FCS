@@ -159,6 +159,76 @@ app.post('/api/admin/create-user', async (req, res) => {
   }
 });
 
+// Actualitzar usuari (Admin)
+app.put('/api/admin/update-user/:id', async (req, res) => {
+  const { id } = req.params;
+  const { email, password, fullName, phone_number, is_active, role } = req.body;
+
+  console.log(`📝 Actualitzant usuari ${id}...`);
+
+  try {
+    const updates = {};
+    const userMetadata = {};
+
+    // 1. Preparar actualitzacions per Auth (si cal)
+    if (email) updates.email = email;
+    if (password && password.length >= 6) updates.password = password;
+    if (fullName) userMetadata.full_name = fullName;
+    
+    if (Object.keys(userMetadata).length > 0) {
+      updates.user_metadata = userMetadata;
+    }
+
+    // Aplicar canvis a Auth
+    if (Object.keys(updates).length > 0) {
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, updates);
+      if (authError) throw authError;
+      console.log('✅ Auth actualitzat.');
+    }
+
+    // 2. Actualitzar taula pública 'users'
+    const publicUpdates = {};
+    if (fullName) publicUpdates.full_name = fullName;
+    if (email) publicUpdates.email = email;
+    if (phone_number !== undefined) publicUpdates.phone_number = phone_number;
+    if (is_active !== undefined) publicUpdates.is_active = is_active;
+
+    if (Object.keys(publicUpdates).length > 0) {
+      const { error: publicError } = await supabaseAdmin
+        .from('users')
+        .update(publicUpdates)
+        .eq('id', id);
+      
+      if (publicError) throw publicError;
+      console.log('✅ Perfil públic actualitzat.');
+    }
+
+    // 3. Actualitzar Rols (si s'especifica)
+    // Nota: El frontend ha d'enviar role: -1 per treure tots els rols, o un ID > 0 per assignar-ne un.
+    // O simplement enviar l'ID del rol principal. Aquí farem una lògica simple: substituir rol.
+    if (role !== undefined) {
+      // Primer esborrem rols existents
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', id);
+      
+      // Si el rol és valid (>0), l'inserim
+      if (role > 0) {
+        const { error: roleError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({ user_id: id, role_id: role });
+        
+        if (roleError) throw roleError;
+      }
+      console.log('✅ Rols actualitzats.');
+    }
+
+    res.json({ success: true, message: 'Usuari actualitzat correctament.' });
+
+  } catch (error) {
+    console.error('Error actualitzant usuari:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 // Eliminar usuari (Admin)
 app.delete('/api/admin/delete-user/:id', async (req, res) => {
   const { id } = req.params;
