@@ -70,7 +70,7 @@ serve(async (req) => {
 
     if (profileError) {
         // Opcional: Esborrar l'usuari d'auth si falla el perfil per mantenir consistència
-        // await supabaseClient.auth.admin.deleteUser(userId)
+        await supabaseClient.auth.admin.deleteUser(userId)
         throw profileError
     }
 

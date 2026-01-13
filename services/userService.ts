@@ -109,14 +109,20 @@ export const UserService = {
 
   // Esborrar usuari (de public.users i els seus rols)
   deleteUser: async (id: string) => {
-    // Primer esborrem rols (tot i que el cascade ho hauria de fer)
-    await supabase.from('user_roles').delete().eq('user_id', id);
-    
-    const { error } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', id);
+    // Utilitzem el backend per assegurar que s'esborra de Auth i de Public
+    // Si ho féssim directament amb supabase.from('users').delete(), l'usuari quedaria "zombie" a Auth.
+    try {
+      const response = await fetch('http://localhost:3001/api/admin/delete-user/' + id, {
+        method: 'DELETE',
+      });
 
-    if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error esborrant usuari des del servidor');
+      }
+    } catch (error) {
+      console.error('Error al deleteUser (via backend):', error);
+      throw error;
+    }
   }
 };

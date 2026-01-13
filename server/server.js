@@ -47,18 +47,65 @@ app.post('/api/admin/create-user', async (req, res) => {
   const { email, password, fullName, role } = req.body;
 
   try {
-    // 1. Crear l'usuari a Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true, // Confirmem automàticament l'email
-      user_metadata: { full_name: fullName }
-    });
+    let authData;
+    let userId;
 
-    if (authError) throw authError;
+    // 1. Intentar crear l'usuari a Supabase Auth
+    try {
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName }
+      });
+      if (error) throw error;
+      authData = data;
+      userId = authData.user.id;
+    } catch (authError) {
+      // GESTIÓ D'ERRORS D'USUARI JA EXISTENT (ZOMBIE KILLER 🧟‍♂️)
+      if (authError.status === 422 && authError.message?.includes('already been registered')) {
+        console.warn(`⚠️ L'email ${email} ja existeix a Auth. Comprovant estat...`);
 
-    console.log('✅ Usuari creat a Auth amb ID:', authData.user.id);
-    const userId = authData.user.id;
+        // Comprovem si existeix a la taula pública
+        const { data: existingPublicUser } = await supabaseAdmin
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (existingPublicUser) {
+          throw new Error('Aquest usuari ja existeix i està actiu al sistema.');
+        } 
+        
+        // Si no existeix a public, és un ZOMBIE. L'hem d'esborrar per poder-lo recrear.
+        console.warn(`🧟 Detectat usuari ZOMBIE. Intentant recuperar ID per netejar...`);
+        
+        // Busquem l'ID de l'usuari a Auth (via llistat, ja que no tenim getUserByEmail directe a l'SDK admin v2 simple)
+        const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const zombieUser = allUsers.find(u => u.email === email);
+
+        if (zombieUser) {
+          console.log(`🔫 Eliminant usuari zombie amb ID: ${zombieUser.id}`);
+          await supabaseAdmin.auth.admin.deleteUser(zombieUser.id);
+          
+          // Reintentem la creació
+          console.log('🔄 Reintentant creació d\'usuari...');
+          const { data: retryData, error: retryError } = await supabaseAdmin.auth.admin.createUser({
+            email, password, email_confirm: true, user_metadata: { full_name: fullName }
+          });
+          
+          if (retryError) throw retryError;
+          authData = retryData;
+          userId = authData.user.id;
+        } else {
+          throw new Error('Error intern: L\'email consta registrat però no s\'ha pogut netejar. Contacta amb suport.');
+        }
+      } else {
+        throw authError; // Altres errors (password short, etc.)
+      }
+    }
+
+    console.log('✅ Usuari creat/recuperat a Auth amb ID:', userId);
 
     // 1.5. Inserir l'usuari a la taula pública 'users' per satisfer la Foreign Key
     // Això és necessari si no tens un Trigger automàtic configurat a la BDD
