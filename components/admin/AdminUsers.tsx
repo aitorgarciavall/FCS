@@ -75,9 +75,17 @@ const AdminUsers: React.FC = () => {
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
                       <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                  {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                              </div>
+                              {user.avatar_url ? (
+                                <img 
+                                  src={user.avatar_url} 
+                                  alt={user.full_name || user.email}
+                                  className="h-8 w-8 rounded-full object-cover border border-gray-200 dark:border-white/10"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                                </div>
+                              )}
                               <div>
                                   <div className="font-medium dark:text-white">{user.full_name || 'Sense nom'}</div>
                                   <div className="text-xs text-gray-500">{user.email}</div>
