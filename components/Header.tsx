@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabaseClient';
+import UserMenu from './UserMenu';
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -102,24 +103,7 @@ const Header: React.FC = () => {
           ))}
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                {isAdmin() && location.pathname !== '/keyper' && (
-                  <Link 
-                    to="/keyper"
-                    className="hidden lg:flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 h-10 px-4 text-sm font-bold text-primary hover:bg-primary/10 transition-all gap-2 border border-primary/20"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">dashboard</span>
-                    Gestió
-                  </Link>
-                )}
-                <button 
-                  onClick={handleLogout}
-                  className="hidden lg:flex items-center justify-center rounded-lg border border-red-200 dark:border-red-900/30 h-10 px-4 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">logout</span>
-                  Sortir
-                </button>
-              </>
+              <UserMenu userId={user.id} isAdmin={isAdmin()} onLogout={handleLogout} />
             ) : (
               <Link 
                 to="/keyper"
@@ -216,23 +200,12 @@ const Header: React.FC = () => {
           ))}
           <div className="pt-4 flex flex-col gap-2">
             {user ? (
-              <>
-                {isAdmin() && location.pathname !== '/keyper' && (
-                  <Link 
-                    to="/keyper"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full bg-primary/10 py-3 rounded-lg font-bold text-primary text-center flex items-center justify-center gap-2 border border-primary/20"
-                  >
-                    <span className="material-symbols-outlined">dashboard</span> Tornar a Gestió
-                  </Link>
-                )}
-                <button 
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full bg-red-50 dark:bg-red-900/10 py-3 rounded-lg font-bold text-red-600 dark:text-red-400 text-center flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined">logout</span> Tancar Sessió
-                </button>
-              </>
+              <UserMenu 
+                userId={user.id} 
+                isAdmin={isAdmin()} 
+                onLogout={() => { handleLogout(); setIsMobileMenuOpen(false); }} 
+                isMobile={true} 
+              />
             ) : (
               <Link 
                 to="/keyper"
