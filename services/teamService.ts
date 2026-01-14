@@ -106,5 +106,63 @@ export const TeamService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  // 6. Obtenir equip per ID
+  getById: async (id: string): Promise<TeamCategory | null> => {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      age: data.age,
+      imageUrl: data.image_url,
+      tag: data.tag
+    };
+  },
+
+  // 7. Obtenir jugadors de l'equip
+  getTeamPlayers: async (teamId: string) => {
+    const { data, error } = await supabase
+      .from('team_players')
+      .select('user_id, users:user_id (id, full_name, email, avatar_url)') // Join amb users
+      .eq('team_id', teamId);
+
+    if (error) throw error;
+    
+    // Mapejar per retornar només l'objecte usuari
+    return data.map((item: any) => item.users);
+  },
+
+  // 8. Actualitzar plantilla de l'equip
+  updateTeamPlayers: async (teamId: string, playerIds: string[]) => {
+    // Primer esborrem tots els existents (estratègia simple)
+    const { error: deleteError } = await supabase
+      .from('team_players')
+      .delete()
+      .eq('team_id', teamId);
+
+    if (deleteError) throw deleteError;
+
+    if (playerIds.length === 0) return;
+
+    // Inserim els nous
+    const inserts = playerIds.map(uid => ({
+      team_id: teamId,
+      user_id: uid
+    }));
+
+    const { error: insertError } = await supabase
+      .from('team_players')
+      .insert(inserts);
+
+    if (insertError) throw insertError;
   }
 };

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { TeamCategory } from '../../types';
 import { TeamService } from '../../services/teamService';
 import { useAuth } from '../../hooks/useAuth';
 
 const AdminTeams: React.FC = () => {
   const { hasRole } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -22,8 +24,11 @@ const AdminTeams: React.FC = () => {
   // 2. Mutació Guardar
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Nota: Aquesta mutació només es fa servir per CREAR equips ara (via modal)
+      // Per editar, es fa a la pàgina dedicada.
       if (currentTeam.id) {
-        return TeamService.update(currentTeam.id, {
+         // Lògica legacy o per si reutilitzem el modal, però ara redirigim.
+         return TeamService.update(currentTeam.id, {
           name: currentTeam.name,
           age: currentTeam.age,
           tag: currentTeam.tag,
@@ -60,9 +65,8 @@ const AdminTeams: React.FC = () => {
 
   const handleEdit = (team: TeamCategory) => {
     if (!canEdit()) return alert("No tens permisos.");
-    setCurrentTeam(team);
-    setIsEditing(true);
-    setSelectedFile(null);
+    // Naveguem a la pàgina d'edició completa
+    navigate(`/keyper/teams/edit/${team.id}`);
   };
 
   const handleDelete = (id: string) => {

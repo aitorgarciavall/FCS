@@ -20,6 +20,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminNews from './components/admin/AdminNews';
 import AdminTeams from './components/admin/AdminTeams';
+import AdminTeamEdit from './components/admin/AdminTeamEdit';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminUserNew from './components/admin/AdminUserNew';
 import AdminUserEdit from './components/admin/AdminUserEdit';
@@ -80,6 +81,7 @@ const App: React.FC = () => {
             <Route index element={<AdminDashboard />} />
             <Route path="news" element={<AdminNews />} />
             <Route path="teams" element={<AdminTeams />} />
+            <Route path="teams/edit/:id" element={<AdminTeamEdit />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/new" element={<AdminUserNew />} />
             <Route path="users/edit/:userId" element={<AdminUserEdit />} />
