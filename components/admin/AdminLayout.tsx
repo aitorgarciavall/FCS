@@ -110,6 +110,12 @@ const AdminLayout: React.FC = () => {
           >
             <span className="material-symbols-outlined">groups</span> Equips
           </Link>
+          <Link
+            to="/keyper/matches"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/keyper/matches') ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+          >
+            <span className="material-symbols-outlined">sports_soccer</span> Partits
+          </Link>
           {canManageUsers && (
             <Link
               to="/keyper/users"

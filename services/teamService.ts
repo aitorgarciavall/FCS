@@ -128,17 +128,31 @@ export const TeamService = {
     };
   },
 
-  // 7. Obtenir jugadors de l'equip
+  // 7. Obtenir jugadors de l'equip (Estratègia 2 passos per evitar error de Join)
   getTeamPlayers: async (teamId: string) => {
-    const { data, error } = await supabase
+    // Pas 1: Obtenir els IDs dels jugadors
+    const { data: relations, error: relationError } = await supabase
       .from('team_players')
-      .select('user_id, users:user_id (id, full_name, email, avatar_url)') // Join amb users
+      .select('user_id')
       .eq('team_id', teamId);
 
-    if (error) throw error;
+    if (relationError) throw relationError;
     
-    // Mapejar per retornar només l'objecte usuari
-    return data.map((item: any) => item.users);
+    if (!relations || relations.length === 0) {
+      return [];
+    }
+
+    const userIds = relations.map((r: any) => r.user_id);
+
+    // Pas 2: Obtenir els detalls dels usuaris
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, full_name, email, avatar_url')
+      .in('id', userIds);
+
+    if (usersError) throw usersError;
+
+    return users;
   },
 
   // 8. Actualitzar plantilla de l'equip
@@ -164,5 +178,26 @@ export const TeamService = {
       .insert(inserts);
 
     if (insertError) throw insertError;
+  },
+
+  // 9. Afegir un jugador (Atomic)
+  addPlayerToTeam: async (teamId: string, userId: string) => {
+    const { error } = await supabase
+      .from('team_players')
+      .insert({ team_id: teamId, user_id: userId });
+      
+    // Ignorem error de duplicat si ja hi és (opcional, o gestionem l'error)
+    if (error && error.code !== '23505') throw error; 
+  },
+
+  // 10. Treure un jugador (Atomic)
+  removePlayerFromTeam: async (teamId: string, userId: string) => {
+    const { error } = await supabase
+      .from('team_players')
+      .delete()
+      .eq('team_id', teamId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
   }
 };
