@@ -8,7 +8,7 @@ export interface Match {
   match_date: string;
   location: string;
   formation: 'F7' | 'F11';
-  lineup: { [key: string]: User }; // JSON amb posicions
+  lineup: any; // JSON amb posicions i metadades { formation: 'F11', positions: { ... } }
   teams?: { name: string }; // Per joins
 }
 

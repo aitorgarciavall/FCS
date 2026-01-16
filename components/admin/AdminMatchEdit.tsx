@@ -89,7 +89,14 @@ const AdminMatchEdit: React.FC = () => {
         formation: match.formation
       });
       if (match.lineup) {
-        setLineup(match.lineup);
+        if (match.lineup.positions) {
+            setLineup(match.lineup.positions);
+            if (match.lineup.formation) {
+                 setMatchData(prev => ({ ...prev, formation: match.lineup.formation }));
+            }
+        } else {
+            setLineup(match.lineup);
+        }
       }
     } else if (isNew && !matchData.match_date) {
         // Si és nou, posem la data actual formatada correctament
@@ -100,17 +107,7 @@ const AdminMatchEdit: React.FC = () => {
     }
   }, [match, isNew]);
 
-  // Canviar formació automàticament segons l'equip (opcional)
-  useEffect(() => {
-    if (matchData.team_id) {
-      const selectedTeam = teams.find(t => t.id === matchData.team_id);
-      if (selectedTeam?.tag?.toLowerCase().includes('7')) {
-        setMatchData(prev => ({ ...prev, formation: 'F7' }));
-      } else {
-        setMatchData(prev => ({ ...prev, formation: 'F11' }));
-      }
-    }
-  }, [matchData.team_id, teams]);
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -120,7 +117,10 @@ const AdminMatchEdit: React.FC = () => {
         location: matchData.location!,
         match_date: new Date(matchData.match_date!).toISOString(),
         formation: matchData.formation!,
-        lineup: lineup
+        lineup: {
+            formation: matchData.formation!,
+            positions: lineup
+        }
       };
 
       if (isNew) {
@@ -184,7 +184,7 @@ const AdminMatchEdit: React.FC = () => {
   return (
     <div className="flex flex-col animate-fade-in">
       {/* Header Form */}
-      <div className="bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-white/10 p-4 sticky top-0 z-20 shadow-sm">
+      <div className="bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-white/10 p-4 sticky top-0 z-20 shadow-sm mr-[350px]">
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold dark:text-white">{isNew ? 'Nou Partit' : 'Editar Partit'}</h2>
             <div className="flex gap-2">
@@ -204,7 +204,19 @@ const AdminMatchEdit: React.FC = () => {
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Equip Local</label>
                 <select 
                     value={matchData.team_id}
-                    onChange={(e) => setMatchData({...matchData, team_id: e.target.value})}
+                    onChange={(e) => {
+                        const newTeamId = e.target.value;
+                        const selectedTeam = teams.find(t => t.id === newTeamId);
+                        let newFormation = matchData.formation;
+                        
+                        if (selectedTeam?.tag?.toLowerCase().includes('7')) {
+                            newFormation = 'F7';
+                        } else if (selectedTeam) {
+                             newFormation = 'F11';
+                        }
+                        
+                        setMatchData({...matchData, team_id: newTeamId, formation: newFormation});
+                    }}
                     className="w-full p-2 rounded border dark:bg-white/5 dark:border-white/10 dark:text-white"
                     disabled={!isNew} // Un cop creat no canviem l'equip per no trencar el lineup
                 >
