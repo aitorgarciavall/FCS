@@ -26,6 +26,7 @@ const Header: React.FC = () => {
 
   const navLinks = [
     { name: 'Inici', path: '/' },
+    { name: 'Calendari', path: '/calendar' },
     { name: 'Equips', path: '/equips' },
     { name: 'Notícies', path: '/noticies' },
     { 

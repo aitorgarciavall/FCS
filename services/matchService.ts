@@ -24,6 +24,20 @@ export const MatchService = {
     return data;
   },
 
+  // Obtenir partits per IDs d'equip
+  getByTeamIds: async (teamIds: string[]): Promise<Match[]> => {
+    if (teamIds.length === 0) return [];
+    
+    const { data, error } = await supabase
+      .from('matches')
+      .select('*, teams(name)')
+      .in('team_id', teamIds)
+      .order('match_date', { ascending: true }); // Ascendent per veure els pròxims primer
+
+    if (error) throw error;
+    return data;
+  },
+
   // Obtenir un partit per ID
   getById: async (id: string): Promise<Match | null> => {
     const { data, error } = await supabase

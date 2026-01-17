@@ -23,9 +23,12 @@ import AdminTeams from './components/admin/AdminTeams';
 import AdminTeamEdit from './components/admin/AdminTeamEdit';
 import AdminMatches from './components/admin/AdminMatches';
 import AdminMatchEdit from './components/admin/AdminMatchEdit';
+import AdminCalendar from './components/admin/AdminCalendar';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminUserNew from './components/admin/AdminUserNew';
 import AdminUserEdit from './components/admin/AdminUserEdit';
+
+import CalendarSection from './components/CalendarSection';
 
 // Home Page Component
 const Home: React.FC = () => (
@@ -69,6 +72,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/equips" element={<TeamsSection />} />
           <Route path="/noticies" element={<NewsSection />} />
+          <Route path="/calendar" element={<CalendarSection />} />
           <Route path="/contacte" element={<Contact />} />
           
           {/* Club Sub-routes */}
@@ -87,6 +91,7 @@ const App: React.FC = () => {
             <Route path="matches" element={<AdminMatches />} />
             <Route path="matches/new" element={<AdminMatchEdit />} />
             <Route path="matches/edit/:id" element={<AdminMatchEdit />} />
+            <Route path="calendar" element={<AdminCalendar />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/new" element={<AdminUserNew />} />
             <Route path="users/edit/:userId" element={<AdminUserEdit />} />
