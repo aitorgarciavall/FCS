@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { UserService } from '../../services/userService';
 import { MatchService, Match } from '../../services/matchService';
 import { User } from '../../types';
+import MatchDetailModal from './MatchDetailModal';
 
 const AdminCalendar: React.FC = () => {
   const { user } = useAuth();
@@ -10,6 +11,7 @@ const AdminCalendar: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [userTeams, setUserTeams] = useState<{ id: string, name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,7 +123,8 @@ const AdminCalendar: React.FC = () => {
               {matches.map((match) => (
                 <div 
                   key={match.id} 
-                  className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md ${getStatusColor(match)} dark:bg-surface-dark dark:border-white/10`}
+                  onClick={() => setSelectedMatch(match)}
+                  className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md cursor-pointer hover:scale-[1.01] ${getStatusColor(match)} dark:bg-surface-dark dark:border-white/10`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
@@ -153,6 +156,9 @@ const AdminCalendar: React.FC = () => {
                          <span className="block text-xs text-gray-400 uppercase">Format</span>
                          <span className="font-bold text-gray-700 dark:text-gray-300">{match.formation}</span>
                       </div>
+                      <div className="ml-2">
+                         <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -160,6 +166,13 @@ const AdminCalendar: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {selectedMatch && (
+        <MatchDetailModal 
+          match={selectedMatch} 
+          onClose={() => setSelectedMatch(null)} 
+        />
       )}
     </div>
   );

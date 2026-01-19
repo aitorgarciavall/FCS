@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MatchService, Match } from '../../services/matchService';
 import { TeamService } from '../../services/teamService';
 import { User } from '../../types';
+import LocationPicker from './LocationPicker';
 
 // Tipus per a les posicions
 interface Position {
@@ -56,7 +57,9 @@ const AdminMatchEdit: React.FC = () => {
     location: '',
     match_date: '', // Inicialitzem buit, s'omplirà al useEffect o per defecte
     formation: 'F11',
-    team_id: ''
+    team_id: '',
+    latitude: undefined,
+    longitude: undefined
   });
 
   // Estat del camp (PositionID -> User)
@@ -86,7 +89,9 @@ const AdminMatchEdit: React.FC = () => {
         opponent: match.opponent,
         location: match.location,
         match_date: toLocalISOString(match.match_date),
-        formation: match.formation
+        formation: match.formation,
+        latitude: match.latitude,
+        longitude: match.longitude
       });
       if (match.lineup) {
         if (match.lineup.positions) {
@@ -117,6 +122,8 @@ const AdminMatchEdit: React.FC = () => {
         location: matchData.location!,
         match_date: new Date(matchData.match_date!).toISOString(),
         formation: matchData.formation!,
+        latitude: matchData.latitude,
+        longitude: matchData.longitude,
         lineup: {
             formation: matchData.formation!,
             positions: lineup
@@ -249,6 +256,17 @@ const AdminMatchEdit: React.FC = () => {
                     <button onClick={() => setMatchData({...matchData, formation: 'F7'})} className={`flex-1 py-1 rounded text-xs font-bold ${matchData.formation === 'F7' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>F7</button>
                     <button onClick={() => setMatchData({...matchData, formation: 'F11'})} className={`flex-1 py-1 rounded text-xs font-bold ${matchData.formation === 'F11' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>F11</button>
                 </div>
+            </div>
+            
+            <div className="md:col-span-4 mt-4">
+               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ubicació al Mapa</label>
+               <LocationPicker 
+                  initialLat={matchData.latitude}
+                  initialLng={matchData.longitude}
+                  initialLocationName={matchData.location}
+                  onLocationSelect={(lat, lng) => setMatchData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                  onLocationNameChange={(name) => setMatchData(prev => ({ ...prev, location: name }))}
+               />
             </div>
         </div>
       </div>

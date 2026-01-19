@@ -7,6 +7,8 @@ export interface Match {
   opponent: string;
   match_date: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   formation: 'F7' | 'F11';
   lineup: any; // JSON amb posicions i metadades { formation: 'F11', positions: { ... } }
   teams?: { name: string }; // Per joins
