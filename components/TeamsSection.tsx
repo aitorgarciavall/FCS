@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { TeamCategory } from '../types';
 import { TeamService } from '../services/teamService';
 
@@ -96,9 +97,12 @@ const TeamsSection: React.FC = () => {
                     <h3 className="text-xl font-bold dark:text-white group-hover:text-primary transition-colors">{cat.name}</h3>
                     <p className="text-gray-500 text-sm mt-1">{cat.age}</p>
                   </div>
-                  <button className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-white font-bold text-sm group-hover:bg-primary group-hover:text-white transition-all">
-                    Veure Equip <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                  </button>
+                  <Link 
+                    to={`/equips/${cat.id}`}
+                    className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-white font-bold text-sm group-hover:bg-primary group-hover:text-white transition-all"
+                  >
+                    Veure Plantilla <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                  </Link>
                 </div>
               </div>
             ))

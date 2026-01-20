@@ -131,10 +131,8 @@ const CalendarSection: React.FC = () => {
                   {events.map(match => (
                     <div 
                         key={match.id}
-                        onClick={() => canCreate ? navigate(`/keyper/matches/edit/${match.id}`) : null}
+                        onClick={() => navigate(`/partits/${match.id}`)}
                         className={`text-xs p-1.5 rounded border border-l-4 cursor-pointer hover:opacity-80 transition-opacity ${
-                            canCreate ? 'cursor-pointer' : 'cursor-default'
-                        } ${
                             match.formation === 'F7' 
                                 ? 'bg-blue-50 border-blue-200 border-l-blue-500 text-blue-800 dark:bg-blue-900/20 dark:border-blue-500/30 dark:text-blue-200'
                                 : 'bg-green-50 border-green-200 border-l-green-500 text-green-800 dark:bg-green-900/20 dark:border-green-500/30 dark:text-green-200'

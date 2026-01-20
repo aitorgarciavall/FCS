@@ -7,6 +7,9 @@ import Hero from './components/Hero';
 import NewsSection from './components/NewsSection';
 import Institucional from './components/Institucional';
 import TeamsSection from './components/TeamsSection';
+import TeamDetail from './components/TeamDetail';
+import MatchDetail from './components/MatchDetail';
+import JoinClub from './components/JoinClub';
 import { 
   ClubPresentacio, 
   ClubIdeari, 
@@ -71,6 +74,9 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/equips" element={<TeamsSection />} />
+          <Route path="/equips/:id" element={<TeamDetail />} />
+          <Route path="/partits/:id" element={<MatchDetail />} />
+          <Route path="/fes-te-soci" element={<JoinClub />} />
           <Route path="/noticies" element={<NewsSection />} />
           <Route path="/calendar" element={<CalendarSection />} />
           <Route path="/contacte" element={<Contact />} />

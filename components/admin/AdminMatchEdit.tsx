@@ -59,7 +59,11 @@ const AdminMatchEdit: React.FC = () => {
     formation: 'F11',
     team_id: '',
     latitude: undefined,
-    longitude: undefined
+    longitude: undefined,
+    result_home: undefined,
+    result_away: undefined,
+    report: '',
+    scorers: []
   });
 
   // Estat del camp (PositionID -> User)
@@ -91,7 +95,11 @@ const AdminMatchEdit: React.FC = () => {
         match_date: toLocalISOString(match.match_date),
         formation: match.formation,
         latitude: match.latitude,
-        longitude: match.longitude
+        longitude: match.longitude,
+        result_home: match.result_home,
+        result_away: match.result_away,
+        report: match.report || '',
+        scorers: match.scorers || []
       });
       if (match.lineup) {
         if (match.lineup.positions) {
@@ -124,6 +132,10 @@ const AdminMatchEdit: React.FC = () => {
         formation: matchData.formation!,
         latitude: matchData.latitude,
         longitude: matchData.longitude,
+        result_home: matchData.result_home,
+        result_away: matchData.result_away,
+        report: matchData.report,
+        scorers: matchData.scorers,
         lineup: {
             formation: matchData.formation!,
             positions: lineup
@@ -146,6 +158,24 @@ const AdminMatchEdit: React.FC = () => {
     },
     onError: (err) => alert('Error guardant partit: ' + err)
   });
+
+  const addScorer = (team: 'home' | 'away') => {
+    const name = prompt('Nom del golejador:');
+    const minute = parseInt(prompt('Minut del gol:') || '0');
+    if (name) {
+      setMatchData(prev => ({
+        ...prev,
+        scorers: [...(prev.scorers || []), { name, minute, team }]
+      }));
+    }
+  };
+
+  const removeScorer = (index: number) => {
+    setMatchData(prev => ({
+      ...prev,
+      scorers: prev.scorers?.filter((_, i) => i !== index)
+    }));
+  };
 
   // Drag & Drop
   const handleDragStart = (e: React.DragEvent, user: User, source: 'roster' | 'field', posId?: number) => {
@@ -255,6 +285,64 @@ const AdminMatchEdit: React.FC = () => {
                 <div className="flex bg-gray-100 dark:bg-white/10 rounded p-1">
                     <button onClick={() => setMatchData({...matchData, formation: 'F7'})} className={`flex-1 py-1 rounded text-xs font-bold ${matchData.formation === 'F7' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>F7</button>
                     <button onClick={() => setMatchData({...matchData, formation: 'F11'})} className={`flex-1 py-1 rounded text-xs font-bold ${matchData.formation === 'F11' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}>F11</button>
+                </div>
+            </div>
+
+            <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl border dark:border-white/10">
+                <div className="md:col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Resultat Final</label>
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                            <p className="text-[10px] text-center mb-1 font-bold text-primary italic">Santpedor</p>
+                            <input 
+                                type="number" 
+                                value={matchData.result_home ?? ''} 
+                                onChange={(e) => setMatchData({...matchData, result_home: e.target.value ? parseInt(e.target.value) : undefined})}
+                                className="w-full text-center text-2xl font-black p-2 rounded border dark:bg-white/5 dark:border-white/10 dark:text-white"
+                                placeholder="?"
+                            />
+                        </div>
+                        <div className="text-2xl font-bold opacity-30">-</div>
+                        <div className="flex-1">
+                            <p className="text-[10px] text-center mb-1 font-bold text-gray-400 italic">Rival</p>
+                            <input 
+                                type="number" 
+                                value={matchData.result_away ?? ''} 
+                                onChange={(e) => setMatchData({...matchData, result_away: e.target.value ? parseInt(e.target.value) : undefined})}
+                                className="w-full text-center text-2xl font-black p-2 rounded border dark:bg-white/5 dark:border-white/10 dark:text-white"
+                                placeholder="?"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase">Golejadors</label>
+                        <div className="flex gap-2">
+                            <button onClick={() => addScorer('home')} className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded font-bold hover:bg-primary/20">+ Santpedor</button>
+                            <button onClick={() => addScorer('away')} className="text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-300">+ Rival</button>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 min-h-[46px] p-2 bg-white dark:bg-black/20 rounded border dark:border-white/10">
+                        {matchData.scorers?.map((s, idx) => (
+                            <div key={idx} className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-bold ${s.team === 'home' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'}`}>
+                                <span>{s.name} ({s.minute}')</span>
+                                <button onClick={() => removeScorer(idx)} className="material-symbols-outlined text-xs hover:scale-125 transition-transform">close</button>
+                            </div>
+                        ))}
+                        {(!matchData.scorers || matchData.scorers.length === 0) && <p className="text-gray-400 italic text-xs self-center">No hi ha golejadors registrats</p>}
+                    </div>
+                </div>
+
+                <div className="md:col-span-3">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Crònica del Partit</label>
+                    <textarea 
+                        value={matchData.report}
+                        onChange={(e) => setMatchData({...matchData, report: e.target.value})}
+                        className="w-full p-3 rounded border dark:bg-white/5 dark:border-white/10 dark:text-white min-h-[150px] text-sm"
+                        placeholder="Escriu aquí el resum del partit, incidències..."
+                    ></textarea>
                 </div>
             </div>
             

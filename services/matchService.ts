@@ -12,6 +12,10 @@ export interface Match {
   formation: 'F7' | 'F11';
   lineup: any; // JSON amb posicions i metadades { formation: 'F11', positions: { ... } }
   teams?: { name: string }; // Per joins
+  result_home?: number;
+  result_away?: number;
+  scorers?: { name: string, minute: number, team: 'home' | 'away' }[];
+  report?: string;
 }
 
 export const MatchService = {

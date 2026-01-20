@@ -113,9 +113,11 @@ const Header: React.FC = () => {
                 Accés
               </Link>
             )}
-            <button className="flex items-center justify-center rounded-lg bg-primary h-10 px-6 text-sm font-bold text-white hover:bg-primary-dark transition-all transform hover:scale-105">
-              Fes-te soci
-            </button>
+            {!user && (
+              <Link to="/fes-te-soci" className="flex items-center justify-center rounded-lg bg-primary h-10 px-6 text-sm font-bold text-white hover:bg-primary-dark transition-all transform hover:scale-105">
+                Fes-te soci
+              </Link>
+            )}
           </div>
         </nav>
 
@@ -216,9 +218,15 @@ const Header: React.FC = () => {
                 Accés Administració
               </Link>
             )}
-            <button className="w-full bg-primary py-3 rounded-lg font-bold text-white">
-              Fes-te soci
-            </button>
+            {!user && (
+              <Link 
+                to="/fes-te-soci"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full block bg-primary py-3 rounded-lg font-bold text-white text-center"
+              >
+                Fes-te soci
+              </Link>
+            )}
           </div>
         </div>
       )}

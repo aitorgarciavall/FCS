@@ -50,6 +50,7 @@ const AdminMatches: React.FC = () => {
               <tr>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Data</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Equip Local</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Resultat</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Rival</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Lloc</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Accions</th>
@@ -62,6 +63,15 @@ const AdminMatches: React.FC = () => {
                     {new Date(match.match_date).toLocaleDateString()} {new Date(match.match_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </td>
                   <td className="px-6 py-4 font-bold text-primary">{match.teams?.name || 'Desconegut'}</td>
+                  <td className="px-6 py-4">
+                    {match.result_home !== undefined && match.result_away !== undefined ? (
+                      <span className="bg-gray-100 dark:bg-white/10 px-2 py-1 rounded font-black dark:text-white">
+                        {match.result_home} - {match.result_away}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 italic text-xs">Pendent</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 dark:text-white">{match.opponent}</td>
                   <td className="px-6 py-4 text-gray-500 text-sm">{match.location}</td>
                   <td className="px-6 py-4 text-right">
