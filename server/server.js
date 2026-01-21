@@ -101,7 +101,31 @@ app.post('/api/admin/create-user', async (req, res) => {
           throw new Error('Error intern: L\'email consta registrat però no s\'ha pogut netejar. Contacta amb suport.');
         }
       } else {
-        throw authError; // Altres errors (password short, etc.)
+        // Nou cas: Error 500 "Database error checking email"
+        // Això pot passar si la BDD està inconsistent. Intentem veure si l'usuari existeix igualment.
+        if (authError.status === 500 && (authError.message?.includes('Database error checking email') || authError.code === 'unexpected_failure')) {
+            console.warn(`⚠️ Error intern de BDD (500) al crear usuari. Comprovant si l'usuari ${email} ja existeix...`);
+            
+            const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+            const existingZombie = allUsers.find(u => u.email === email);
+
+            if (existingZombie) {
+                console.log(`🧟 ZOMBIE RE-CONFIRMAT (tot i l'error 500): ID ${existingZombie.id}. Recuperant...`);
+                
+                // Si cal, actualitzem password
+                if (password) {
+                    await supabaseAdmin.auth.admin.updateUserById(existingZombie.id, { password: password });
+                }
+
+                authData = { user: existingZombie };
+                userId = existingZombie.id;
+            } else {
+                // Si no el trobem i dona error 500, és un error real de BDD
+                throw authError;
+            }
+        } else {
+            throw authError;
+        }
       }
     }
 
@@ -263,35 +287,81 @@ app.delete('/api/admin/delete-user/:id', async (req, res) => {
   console.log(`🗑️ Rebuda petició per esborrar usuari: ${id}`);
 
   try {
-    // 1. Intentar esborrar de Supabase Auth
+    // DIAGNÒSTIC: Comprovar si l'usuari existeix realment a Auth
+    const { data: authUser, error: findError } = await supabaseAdmin.auth.admin.getUserById(id);
+    if (findError) {
+        console.warn('⚠️ Error buscant usuari a Auth abans d\'esborrar:', findError);
+        // Si no el trobem, potser ja és un zombie. Continuem amb la neteja pública.
+    } else {
+        console.log('ℹ️ Usuari trobat a Auth:', authUser.user.email);
+    }
+
+    // PAS 1: Neteja manual de dependències a l'esquema públic (EXCEPTE la taula principal users per ara)
+    console.log('🧹 Netejant dependències públiques satèl·lit...');
+
+    const tablesToClean = ['user_roles', 'team_players', 'sepa_info'];
+    for (const table of tablesToClean) {
+        const { error } = await supabaseAdmin.from(table).delete().eq('user_id', id);
+        if (error) console.warn(`⚠️ Error netejant taula ${table}: ${error.message}`);
+    }
+
+    const { error: pgError } = await supabaseAdmin
+        .from('player_guardians')
+        .delete()
+        .or(`player_id.eq.${id},guardian_id.eq.${id}`);
+    if (pgError) console.warn(`⚠️ Error netejant player_guardians: ${pgError.message}`);
+
+    // PAS 2: Esborrar de public.users
+    // Forcem l'esborrat manual per assegurar que desapareix de la llista visual,
+    // independentment de si el CASCADE d'Auth funciona o no.
+    const { error: publicError } = await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('id', id);
+    
+    if (publicError) console.warn('⚠️ Error esborrant de public.users (potser ja esborrat):', publicError.message);
+
+    // PAS 3: Finalment, esborrar de Supabase Auth
+    console.log('🔥 Intentant esborrar de Auth...');
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
     
     if (authError) {
-        // Si l'error és que no es troba, potser ja s'havia esborrat d'Auth i és un "zombie" a public
         if (authError.status === 404 || authError.code === 'user_not_found') {
-            console.warn('⚠️ Usuari no trobat a Auth. Procedint a netejar de public.users...');
+            console.warn('⚠️ Usuari no trobat a Auth. Ja estava esborrat.');
+            
+            // Si no hi era a Auth, assegurem-nos que no quedi res a public.users ara sí
+            console.log('🧹 Netejant residu a public.users...');
+            await supabaseAdmin.from('users').delete().eq('id', id);
+
+        } else if (authError.status === 500 && authError.code === 'unexpected_failure') {
+            console.error('🧟 DETECTAT USUARI ZOMBIE/CORRUPTE (Error 500). Intentant neteja automàtica via RPC...');
+            
+            // Intentem cridar la funció d'emergència a la BDD
+            const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('force_delete_user', { 
+                target_user_id: id 
+            });
+
+            if (rpcError) {
+                console.error('❌ Error fatal: Ni tan sols el RPC ha pogut esborrar-lo:', rpcError);
+                throw new Error(`Error crític impossible de resoldre automàticament: ${rpcError.message}`);
+            }
+
+            if (rpcData && !rpcData.success) {
+                 throw new Error(`La neteja automàtica ha fallat: ${rpcData.error}`);
+            }
+
+            console.log('✅ Neteja automàtica (Zombie Killer) completada amb èxit via RPC.');
+            // Si hem arribat aquí, l'usuari està esborrat, continuem per enviar el success al client.
+
         } else {
+            console.error('❌ Error crític esborrant de Auth:', authError);
             throw authError;
         }
     } else {
         console.log('✅ Usuari esborrat de Auth.');
     }
 
-    // 2. Assegurar esborrat de la taula pública 'users'
-    // Això és crucial si no hi ha CASCADE configurat a la BDD
-    const { error: publicError } = await supabaseAdmin
-        .from('users')
-        .delete()
-        .eq('id', id);
-
-    if (publicError) {
-        console.error('❌ Error esborrant de public.users:', publicError);
-        throw publicError;
-    }
-    
-    console.log('✅ Usuari esborrat de public.users.');
-
-    res.json({ success: true, message: 'Usuari eliminat correctament de tots els registres.' });
+    res.json({ success: true, message: 'Usuari eliminat correctament.' });
 
   } catch (error) {
     console.error('Error eliminant usuari:', error);

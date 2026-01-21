@@ -174,5 +174,47 @@ export const UserService = {
       console.error('Error al deleteUser (via backend):', error);
       throw error;
     }
+  },
+
+  // --- Mètodes per a Tutors ---
+
+  // Obtenir dades bancàries
+  getSepaInfo: async (userId: string) => {
+    const { data, error } = await supabase
+      .from('sepa_info')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Actualitzar/Crear dades bancàries
+  upsertSepaInfo: async (info: any) => {
+    const { data, error } = await supabase
+      .from('sepa_info')
+      .upsert(info)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Obtenir fills/jugadors gestionats
+  getManagedPlayers: async (guardianId: string) => {
+    const { data, error } = await supabase
+      .from('player_guardians')
+      .select(`
+        *,
+        player:player_id (*)
+      `)
+      .eq('guardian_id', guardianId);
+
+    if (error) throw error;
+    
+    // Mapejar per tenir l'objecte User pla si cal, o retornar l'estructura
+    return data || [];
   }
 };

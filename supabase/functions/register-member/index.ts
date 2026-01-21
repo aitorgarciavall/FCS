@@ -31,13 +31,11 @@ serve(async (req) => {
     // 1. Crear o Obtenir Usuari TUTOR
     // Mirem si ja existeix
     let guardianId = null;
-    const { data: existingGuardian } = await supabaseClient.auth.admin.listUsers();
-    // Nota: listUsers no és eficient per buscar un mail concret en producció, millor usar getUser però requereix ID.
-    // En un cas real, intentem crear i capturem l'error si ja existeix.
+    let guardianUserMetadata = null;
 
     const { data: guardianAuth, error: guardianError } = await supabaseClient.auth.admin.createUser({
       email: guardian.email,
-      password: 'tempPassword123!', // Generar random o enviar magic link després
+      password: 'tempPassword123!', 
       email_confirm: true,
       user_metadata: {
         full_name: `${guardian.name} ${guardian.surname}`,
@@ -47,19 +45,61 @@ serve(async (req) => {
     });
 
     if (guardianError) {
-        // Si ja existeix, hauriem de buscar-lo, però per seguretat potser no volem revelar-ho. 
-        // Per aquest prototip, si falla assumim que és perquè ja existeix (comprovació simple)
         if (guardianError.message.includes('already registered')) {
-             // Aquí hauríem de fer una lògica per recuperar l'ID si volem permetre tutors existents
-             // De moment, retornem error
-             return new Response(JSON.stringify({ error: 'Aquest email de tutor ja està registrat.' }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 400,
-             });
+             console.log(`⚠️ L'usuari ${guardian.email} ja existeix a Auth. Comprovant si és un ZOMBIE...`);
+             
+             // 1. Busquem l'usuari a Auth per obtenir el seu ID
+             // Nota: listUsers no filtra per email, portem una pàgina (millorar per producció massiva)
+             const { data: { users: allUsers } } = await supabaseClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+             const existingUser = allUsers.find(u => u.email === guardian.email);
+
+             if (existingUser) {
+                 // 2. Comprovem si existeix a la taula pública 'users'
+                 const { data: publicProfile } = await supabaseClient
+                    .from('users')
+                    .select('id')
+                    .eq('id', existingUser.id)
+                    .maybeSingle();
+
+                 if (!publicProfile) {
+                     console.log(`🧟 ZOMBIE CONFIRMAT: ID ${existingUser.id}. Recuperant compte...`);
+                     guardianId = existingUser.id;
+                     guardianUserMetadata = existingUser.user_metadata;
+                     
+                     // Actualitzem les dades a Auth per si han canviat
+                     await supabaseClient.auth.admin.updateUserById(guardianId, {
+                        user_metadata: {
+                            full_name: `${guardian.name} ${guardian.surname}`,
+                            dni: guardian.dni,
+                            phone: guardian.phone
+                        }
+                     });
+                     
+                     // Creem manualment l'entrada a public.users que falta
+                     await supabaseClient.from('users').insert({
+                         id: guardianId,
+                         email: guardian.email,
+                         full_name: `${guardian.name} ${guardian.surname}`,
+                         is_active: true
+                     });
+
+                 } else {
+                     console.log('⛔ Usuari ja registrat i actiu.');
+                     return new Response(JSON.stringify({ error: 'Aquest email de tutor ja està registrat.' }), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 400,
+                     });
+                 }
+             } else {
+                 throw guardianError;
+             }
+        } else {
+            throw guardianError;
         }
-        throw guardianError;
+    } else {
+        guardianId = guardianAuth.user.id;
+        guardianUserMetadata = guardianAuth.user.user_metadata;
     }
-    guardianId = guardianAuth.user.id;
 
     // 2. Crear Usuari JUGADOR
     // Si és el mateix tutor que jugador
@@ -69,7 +109,7 @@ serve(async (req) => {
         // Actualitzem metadata del tutor per incloure dades de jugador també
         await supabaseClient.auth.admin.updateUserById(guardianId, {
             user_metadata: {
-                ...guardianAuth.user.user_metadata,
+                ...guardianUserMetadata,
                 birth_date: player.birthDate,
                 address: player.address,
                 city: player.city,

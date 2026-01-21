@@ -30,6 +30,9 @@ import AdminCalendar from './components/admin/AdminCalendar';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminUserNew from './components/admin/AdminUserNew';
 import AdminUserEdit from './components/admin/AdminUserEdit';
+import TutorProfile from './components/admin/TutorProfile';
+import TutorBilling from './components/admin/TutorBilling';
+import TutorPlayers from './components/admin/TutorPlayers';
 
 import CalendarSection from './components/CalendarSection';
 
@@ -101,6 +104,11 @@ const App: React.FC = () => {
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/new" element={<AdminUserNew />} />
             <Route path="users/edit/:userId" element={<AdminUserEdit />} />
+            
+            {/* Tutor / User Area */}
+            <Route path="profile" element={<TutorProfile />} />
+            <Route path="billing" element={<TutorBilling />} />
+            <Route path="my-players" element={<TutorPlayers />} />
           </Route>
         </Routes>
       </main>

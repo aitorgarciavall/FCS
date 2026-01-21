@@ -54,4 +54,32 @@ export interface User {
   created_at?: string;
   roles?: Role[]; // Per mostrar els rols a la interfície
   teams?: { id: string, name: string }[]; // Equips assignats
+  // Extended profile fields
+  birth_date?: string;
+  dni?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  phone_secondary?: string;
+  shirt_size?: string;
+  allergies?: string;
+}
+
+export interface SepaInfo {
+  id?: string;
+  user_id: string;
+  iban: string;
+  account_holder: string;
+  swift_bic?: string;
+  mandate_date?: string;
+  is_active: boolean;
+}
+
+export interface PlayerGuardian {
+  id: string;
+  player_id: string;
+  guardian_id: string;
+  relationship_type: string;
+  is_primary: boolean;
+  player?: User; // Joined data
 }

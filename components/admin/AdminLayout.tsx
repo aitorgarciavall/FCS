@@ -130,6 +130,31 @@ const AdminLayout: React.FC = () => {
               <span className="material-symbols-outlined">manage_accounts</span> Usuaris
             </Link>
           )}
+
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-white/10">
+            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">La Meva Àrea</p>
+            
+            <Link
+              to="/keyper/profile"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/keyper/profile' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">person</span> El meu Perfil
+            </Link>
+
+            <Link
+              to="/keyper/my-players"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/keyper/my-players' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">family_restroom</span> Els meus Jugadors
+            </Link>
+
+            <Link
+              to="/keyper/billing"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/keyper/billing' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">credit_card</span> Facturació
+            </Link>
+          </div>
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
