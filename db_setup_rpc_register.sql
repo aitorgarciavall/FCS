@@ -22,7 +22,8 @@ DECLARE
 BEGIN
     -- 1. Preparar dades
     guardian_email := guardian_data->>'email';
-    encrypted_pw := crypt('tempPassword123!', gen_salt('bf'));
+    -- Ajustem el cost a 10 (estàndard Supabase)
+    encrypted_pw := crypt('tempPassword123!', gen_salt('bf', 10));
     
     -- Validar si el tutor ja existeix
     IF EXISTS (SELECT 1 FROM auth.users WHERE email = guardian_email) THEN
@@ -31,15 +32,26 @@ BEGIN
 
     -- 2. Crear Usuari TUTOR a auth.users
     INSERT INTO auth.users (
-        instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at
+        instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, created_at, updated_at
     ) VALUES (
         '00000000-0000-0000-0000-000000000000', uuid_generate_v4(), 'authenticated', 'authenticated', guardian_email, encrypted_pw, now(),
         jsonb_build_object(
             'full_name', (guardian_data->>'name') || ' ' || (guardian_data->>'surname'),
             'dni', guardian_data->>'dni',
             'phone', guardian_data->>'phone'
-        ), now(), now()
+        ),
+        jsonb_build_object('provider', 'email', 'providers', ARRAY['email']), -- CRÍTIC: App Metadata
+        now(), now()
     ) RETURNING id INTO new_guardian_id;
+
+    -- CRÍTIC: Crear Identitat per al Tutor (Necessari per GoTrue)
+    INSERT INTO auth.identities (
+        id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+    ) VALUES (
+        uuid_generate_v4(), new_guardian_id, 
+        jsonb_build_object('sub', new_guardian_id, 'email', guardian_email, 'email_verified', true, 'phone_verified', false), 
+        'email', new_guardian_id::text, now(), now(), now()
+    );
 
     -- CORRECCIÓ: Inserir manualment a public.users immediatament per evitar error de Foreign Key
     INSERT INTO public.users (id, email, full_name, dni, phone_number, created_at)
@@ -84,15 +96,26 @@ BEGIN
         END IF;
 
         INSERT INTO auth.users (
-            instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at
+            instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, created_at, updated_at
         ) VALUES (
             '00000000-0000-0000-0000-000000000000', uuid_generate_v4(), 'authenticated', 'authenticated', player_email, encrypted_pw, now(),
             jsonb_build_object(
                 'full_name', (player_data->>'name') || ' ' || (player_data->>'surname'),
                 'dni', player_data->>'dni',
                 'birth_date', player_data->>'birthDate'
-            ), now(), now()
+            ),
+            jsonb_build_object('provider', 'email', 'providers', ARRAY['email']), -- CRÍTIC: App Metadata
+            now(), now()
         ) RETURNING id INTO new_player_id;
+
+        -- CRÍTIC: Crear Identitat per al Jugador
+        INSERT INTO auth.identities (
+            id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+        ) VALUES (
+            uuid_generate_v4(), new_player_id, 
+            jsonb_build_object('sub', new_player_id, 'email', player_email, 'email_verified', true, 'phone_verified', false), 
+            'email', new_player_id::text, now(), now(), now()
+        );
 
         -- CORRECCIÓ: Inserir manualment el JUGADOR a public.users
         INSERT INTO public.users (id, email, full_name, dni, birth_date, address, city, postal_code, shirt_size, allergies, created_at)

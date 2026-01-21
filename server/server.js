@@ -42,6 +42,158 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'FCS Admin Server is running 🚀' });
 });
 
+// --- REGISTRE PÚBLIC (Fes-te Soci) ---
+app.post('/api/register-family', async (req, res) => {
+  const { guardian, player, sepa } = req.body;
+  
+  console.log('👨‍👩‍👧‍👦 Iniciant registre familiar per:', guardian.email);
+
+  let guardianId = null;
+  let playerId = null;
+  const createdUserIds = []; // Per fer rollback si cal
+
+  try {
+    // 1. Crear TUTOR a Auth
+    console.log('   Creating Guardian Auth...');
+    const { data: guardianAuth, error: gAuthError } = await supabaseAdmin.auth.admin.createUser({
+      email: guardian.email,
+      password: 'tempPassword123!', // Contrasenya inicial
+      email_confirm: true,
+      user_metadata: {
+        full_name: `${guardian.name} ${guardian.surname}`,
+        dni: guardian.dni,
+        phone: guardian.phone
+      }
+    });
+
+    if (gAuthError) throw gAuthError;
+    guardianId = guardianAuth.user.id;
+    createdUserIds.push(guardianId);
+
+    // 2. Assegurar perfil TUTOR a Public (i actualitzar dades)
+    // El trigger automàtic pot haver creat el user, però necessitem assegurar camps extra com DNI/Telèfon
+    const { error: gProfileError } = await supabaseAdmin
+      .from('users')
+      .upsert({
+        id: guardianId,
+        email: guardian.email,
+        full_name: `${guardian.name} ${guardian.surname}`,
+        dni: guardian.dni,
+        phone_number: guardian.phone,
+        is_active: true
+      });
+    
+    if (gProfileError) throw new Error(`Error creant perfil tutor: ${gProfileError.message}`);
+
+    // Assignar rol TUTOR (7)
+    await supabaseAdmin.from('user_roles').insert({ user_id: guardianId, role_id: 7 });
+
+    // 3. Crear JUGADOR
+    if (guardian.isSameAsPlayer) {
+      console.log('   Player is Guardian.');
+      playerId = guardianId;
+      
+      // Afegir rol PLAYER (6) al mateix usuari
+      await supabaseAdmin.from('user_roles').insert({ user_id: guardianId, role_id: 6 });
+
+      // Actualitzar dades de jugador al perfil existent
+      await supabaseAdmin.from('users').update({
+        birth_date: player.birthDate,
+        address: player.address,
+        city: player.city,
+        postal_code: player.postalCode,
+        shirt_size: player.shirtSize,
+        allergies: player.allergies
+      }).eq('id', guardianId);
+
+    } else {
+      console.log('   Creating Child Player...');
+      
+      // Generar email fictici si no en té
+      const playerEmail = player.email || 
+        `${guardian.email.split('@')[0]}+${player.name.replace(/\s+/g, '').toLowerCase()}@santpedorfc.placeholder`;
+
+      const { data: playerAuth, error: pAuthError } = await supabaseAdmin.auth.admin.createUser({
+        email: playerEmail,
+        password: 'tempPassword123!',
+        email_confirm: true,
+        user_metadata: {
+          full_name: `${player.name} ${player.surname}`,
+          dni: player.dni,
+          birth_date: player.birthDate
+        }
+      });
+
+      if (pAuthError) throw pAuthError;
+      playerId = playerAuth.user.id;
+      createdUserIds.push(playerId);
+
+      // Perfil Jugador Public
+      const { error: pProfileError } = await supabaseAdmin
+        .from('users')
+        .upsert({
+          id: playerId,
+          email: playerEmail,
+          full_name: `${player.name} ${player.surname}`,
+          dni: player.dni,
+          birth_date: player.birthDate,
+          address: player.address,
+          city: player.city,
+          postal_code: player.postalCode,
+          shirt_size: player.shirtSize,
+          allergies: player.allergies,
+          is_active: true
+        });
+
+      if (pProfileError) throw new Error(`Error creant perfil jugador: ${pProfileError.message}`);
+
+      // Rol Jugador (6)
+      await supabaseAdmin.from('user_roles').insert({ user_id: playerId, role_id: 6 });
+
+      // Vincular Tutor-Jugador
+      const { error: linkError } = await supabaseAdmin.from('player_guardians').insert({
+        player_id: playerId,
+        guardian_id: guardianId,
+        relationship_type: guardian.relationship,
+        is_primary: true
+      });
+
+      if (linkError) throw new Error(`Error vinculant familiar: ${linkError.message}`);
+    }
+
+    // 4. Guardar SEPA (al Tutor)
+    const { error: sepaError } = await supabaseAdmin.from('sepa_info').insert({
+      user_id: guardianId,
+      iban: sepa.iban,
+      account_holder: sepa.holderName,
+      swift_bic: sepa.swift
+    });
+
+    if (sepaError) throw new Error(`Error guardant dades bancàries: ${sepaError.message}`);
+
+    console.log('✅ Registre familiar completat amb èxit.');
+    res.json({ success: true, guardianId, playerId });
+
+  } catch (error) {
+    console.error('❌ Error en el registre familiar:', error);
+    
+    // ROLLBACK MANUAL
+    // Si ha fallat alguna cosa, intentem esborrar els usuaris que hem creat per no deixar brossa
+    console.log('🔄 Executant Rollback...');
+    for (const uid of createdUserIds) {
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(uid);
+        // També netegem perfils públics per si de cas
+        await supabaseAdmin.from('users').delete().eq('id', uid);
+      } catch (cleanupError) {
+        console.error(`Error durant el rollback de ${uid}:`, cleanupError);
+      }
+    }
+
+    res.status(400).json({ success: false, error: error.message || 'Error en el procés de registre.' });
+  }
+});
+
 // Crear nou usuari (Admin)
 app.post('/api/admin/create-user', async (req, res) => {
   const { email, password, fullName, roles } = req.body;

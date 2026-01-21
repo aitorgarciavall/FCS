@@ -117,20 +117,24 @@ const JoinClub: React.FC = () => {
     setIsLoading(true);
     
     try {
-        console.log("Enviant dades via RPC...");
+        console.log("Enviant dades via API Server...");
         
-        // Cridem a la funció SQL 'register_family_pack'
-        const { data: response, error: rpcError } = await supabase.rpc('register_family_pack', {
-            guardian_data: data.guardian,
-            player_data: data.player,
-            sepa_data: data.sepa
+        // Cridem al nostre backend en lloc de la funció SQL directa
+        // Això garanteix que l'usuari es crea correctament amb totes les metadades d'Auth
+        const response = await fetch('http://localhost:3001/api/register-family', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                guardian: data.guardian,
+                player: data.player,
+                sepa: data.sepa
+            })
         });
 
-        if (rpcError) throw rpcError;
+        const result = await response.json();
 
-        // Comprovem si la funció SQL ha retornat un error lògic
-        if (!response.success) {
-            throw new Error(response.error || "Error desconegut en el registre.");
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || "Error desconegut en el registre.");
         }
 
         alert("Inscripció realitzada correctament! L'usuari ha estat creat. Pots accedir amb l'email del tutor i la contrasenya temporal: tempPassword123!");
