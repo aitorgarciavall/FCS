@@ -83,3 +83,12 @@ export interface PlayerGuardian {
   is_primary: boolean;
   player?: User; // Joined data
 }
+
+export interface TrainingSession {
+  id: string;
+  day_of_week: number; // 1 (Mon) - 7 (Sun)
+  start_time: string; // HH:mm:ss
+  end_time: string; // HH:mm:ss
+  team_name: string;
+  field_name?: string;
+}

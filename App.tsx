@@ -33,8 +33,10 @@ import AdminUserEdit from './components/admin/AdminUserEdit';
 import TutorProfile from './components/admin/TutorProfile';
 import TutorBilling from './components/admin/TutorBilling';
 import TutorPlayers from './components/admin/TutorPlayers';
+import AdminSchedule from './components/admin/AdminSchedule';
 
 import CalendarSection from './components/CalendarSection';
+import ScheduleSection from './components/ScheduleSection';
 
 // Home Page Component
 const Home: React.FC = () => (
@@ -82,6 +84,7 @@ const App: React.FC = () => {
           <Route path="/fes-te-soci" element={<JoinClub />} />
           <Route path="/noticies" element={<NewsSection />} />
           <Route path="/calendar" element={<CalendarSection />} />
+          <Route path="/horaris" element={<ScheduleSection />} />
           <Route path="/contacte" element={<Contact />} />
           
           {/* Club Sub-routes */}
@@ -101,6 +104,7 @@ const App: React.FC = () => {
             <Route path="matches/new" element={<AdminMatchEdit />} />
             <Route path="matches/edit/:id" element={<AdminMatchEdit />} />
             <Route path="calendar" element={<AdminCalendar />} />
+            <Route path="schedule" element={<AdminSchedule />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/new" element={<AdminUserNew />} />
             <Route path="users/edit/:userId" element={<AdminUserEdit />} />
