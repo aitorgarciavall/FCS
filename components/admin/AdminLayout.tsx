@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUserRoles } from '../../hooks/useUserRoles';
 import Auth from '../Auth';
 import { supabase } from '../../services/supabaseClient';
+import { NotificationBell } from './NotificationBell';
 
 const AdminLayout: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -71,9 +72,9 @@ const AdminLayout: React.FC = () => {
 
   // 4. TOT OK -> Panell
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-background-dark flex animate-fade-in">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-100 dark:bg-background-dark flex animate-fade-in">
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-surface-dark border-r border-gray-200 dark:border-white/10 hidden md:flex flex-col fixed h-full">
+      <aside className="w-64 bg-white dark:bg-surface-dark border-r border-gray-200 dark:border-white/10 hidden md:flex flex-col fixed h-[calc(100vh-4rem)] top-16">
         <div className="p-6 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2 mb-4">
             <span className="material-symbols-outlined text-primary">admin_panel_settings</span>
@@ -141,6 +142,13 @@ const AdminLayout: React.FC = () => {
             <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">La Meva Àrea</p>
             
             <Link
+              to="/keyper/messages"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/keyper/messages' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className="material-symbols-outlined">mail</span> Missatgeria
+            </Link>
+
+            <Link
               to="/keyper/profile"
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/keyper/profile' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'}`}
             >
@@ -171,9 +179,11 @@ const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-64 p-8 overflow-y-auto min-h-screen">
-        <Outlet context={{ roles }} /> 
-      </main>
+      <div className="flex-1 md:ml-64 flex flex-col">
+        <main className="flex-1 p-8 overflow-y-auto">
+           <Outlet context={{ roles }} /> 
+        </main>
+      </div>
     </div>
   );
 };

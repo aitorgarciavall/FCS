@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Hero from './components/Hero';
@@ -34,6 +34,7 @@ import TutorProfile from './components/admin/TutorProfile';
 import TutorBilling from './components/admin/TutorBilling';
 import TutorPlayers from './components/admin/TutorPlayers';
 import AdminSchedule from './components/admin/AdminSchedule';
+import MessagesSection from './components/admin/MessagesSection';
 
 import CalendarSection from './components/CalendarSection';
 import ScheduleSection from './components/ScheduleSection';
@@ -71,6 +72,9 @@ const Contact: React.FC = () => (
 );
 
 const App: React.FC = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/keyper');
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header needs to be inside Router context, which App is */}
@@ -110,13 +114,14 @@ const App: React.FC = () => {
             <Route path="users/edit/:userId" element={<AdminUserEdit />} />
             
             {/* Tutor / User Area */}
+            <Route path="messages" element={<MessagesSection />} />
             <Route path="profile" element={<TutorProfile />} />
             <Route path="billing" element={<TutorBilling />} />
             <Route path="my-players" element={<TutorPlayers />} />
           </Route>
         </Routes>
       </main>
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </div>
   );
 };

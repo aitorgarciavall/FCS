@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabaseClient';
 import UserMenu from './UserMenu';
+import { NotificationBell } from './admin/NotificationBell';
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -104,6 +105,7 @@ const Header: React.FC = () => {
             </div>
           ))}
           <div className="flex items-center gap-3">
+            {user && <NotificationBell />}
             {user ? (
               <UserMenu userId={user.id} isAdmin={isAdmin()} onLogout={handleLogout} />
             ) : (
@@ -123,6 +125,7 @@ const Header: React.FC = () => {
         </nav>
 
         <div className="flex md:hidden items-center gap-2">
+          {user && <NotificationBell />}
           {user ? (
             <>
               {isAdmin() && location.pathname !== '/keyper' && (

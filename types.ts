@@ -92,3 +92,15 @@ export interface TrainingSession {
   team_name: string;
   field_name?: string;
 }
+
+export interface UserMessage {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  subject: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  sender?: User; // Joined data
+  receiver?: User; // Joined data
+}
