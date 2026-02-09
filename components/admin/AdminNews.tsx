@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { NewsItem } from '../../types';
 import { NewsService } from '../../services/newsService';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 
 const AdminNews: React.FC = () => {
   const { hasRole, user } = useAuth();
+  const { showAlert, showConfirm } = useModal();
   const queryClient = useQueryClient();
   
   // Estats locals per UI (edició, formularis)
@@ -45,8 +47,8 @@ const AdminNews: React.FC = () => {
       setCurrentNewsItem({});
       setSelectedFile(null);
     },
-    onError: () => {
-      alert("Error al guardar la notícia.");
+    onError: (err: any) => {
+      showAlert({ message: "Error al guardar la notícia: " + (err.message || err), type: 'error' });
     }
   });
 
@@ -56,8 +58,8 @@ const AdminNews: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
     },
-    onError: () => {
-      alert("Error esborrant la notícia.");
+    onError: (err: any) => {
+      showAlert({ message: "Error esborrant la notícia: " + (err.message || err), type: 'error' });
     }
   });
 
@@ -73,24 +75,34 @@ const AdminNews: React.FC = () => {
     );
   }
 
-  const handleEditNews = (item: NewsItem) => {
+  const handleEditNews = async (item: NewsItem) => {
     // La comprovació ja està feta a l'inici, però la mantenim per seguretat
-    if (!canEditNews()) return alert("No tens permisos."); 
+    if (!canEditNews()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
     setCurrentNewsItem(item);
     setIsEditing(true);
     setSelectedFile(null);
   };
 
-  const handleDeleteNews = (id: string) => {
-    if (!canEditNews()) return alert("No tens permisos.");
-    if (confirm('Estàs segur?')) {
+  const handleDeleteNews = async (id: string) => {
+    if (!canEditNews()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
+    const confirmed = await showConfirm('Estàs segur d\'esborrar aquesta notícia?');
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleSaveNews = (e: React.FormEvent) => {
+  const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canEditNews()) return alert("No tens permisos.");
+    if (!canEditNews()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
     saveMutation.mutate();
   };
 

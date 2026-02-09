@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 import { MessageService } from '../../services/messageService';
 import { UserService } from '../../services/userService';
 import { UserMessage, User, Role } from '../../types';
@@ -7,6 +8,7 @@ import { supabase } from '../../services/supabaseClient';
 
 export const MessagesSection: React.FC = () => {
   const { user } = useAuth();
+  const { showConfirm } = useModal();
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'new'>('inbox');
   const [messages, setMessages] = useState<UserMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<UserMessage | null>(null);
@@ -30,8 +32,6 @@ export const MessagesSection: React.FC = () => {
     let subscription: any = null;
     if (activeTab === 'inbox') {
       subscription = MessageService.subscribeToMessages(user.id, () => {
-         // When a new message arrives, reload the list
-         // We could toast here too
          loadMessages();
       });
     }
@@ -123,7 +123,9 @@ export const MessagesSection: React.FC = () => {
   };
 
   const handleDelete = async (msgId: string) => {
-      if(!window.confirm("Estàs segur d'esborrar aquest missatge?")) return;
+      const confirmed = await showConfirm("Estàs segur d'esborrar aquest missatge?");
+      if (!confirmed) return;
+      
       if (!user) return; // Ensure user exists
       try {
           await MessageService.deleteMessage(msgId, user.id);

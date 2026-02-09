@@ -5,9 +5,11 @@ import { UserService } from '../../services/userService';
 import { adminService } from '../../services/adminService';
 import { User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 
 const AdminUsers: React.FC = () => {
   const { hasRole } = useAuth();
+  const { showAlert, showConfirm } = useModal();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -21,7 +23,7 @@ const AdminUsers: React.FC = () => {
   const deleteUserMutation = useMutation({
     mutationFn: adminService.deleteUser, // Utilitzem el backend segur
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
-    onError: (err) => alert(`Error esborrant usuari: ${err}`)
+    onError: (err: any) => showAlert({ message: `Error esborrant usuari: ${err.message || err}`, type: 'error' })
   });
 
   // Handlers
@@ -29,8 +31,9 @@ const AdminUsers: React.FC = () => {
     navigate(`/keyper/users/edit/${user.id}`);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('ATENCIÓ: Estàs a punt d\'esborrar un usuari i els seus rols. Aquesta acció no es pot desfer. Estàs segur?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirm('ATENCIÓ: Estàs a punt d\'esborrar un usuari i els seus rols. Aquesta acció no es pot desfer. Estàs segur?');
+    if (confirmed) {
       deleteUserMutation.mutate(id);
     }
   };

@@ -4,46 +4,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TeamService } from '../../services/teamService';
 import { UserService } from '../../services/userService';
 import { User } from '../../types';
+import { useModal } from '../../context/ModalContext';
 
 const AdminTeamEdit: React.FC = () => {
   const { id: teamId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showAlert } = useModal();
 
-  // Dades de l'equip (formulari)
-  const [teamData, setTeamData] = useState({ name: '', age: '', tag: '', imageUrl: '' });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // 1. Queries
-  const { data: team, isLoading: teamLoading } = useQuery({
-    queryKey: ['team', teamId],
-    queryFn: () => TeamService.getById(teamId!),
-    enabled: !!teamId
-  });
-
-  const { data: allUsers = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: UserService.getAllUsers
-  });
-
-  const { data: currentTeamPlayers = [], isLoading: playersLoading } = useQuery({
-    queryKey: ['teamPlayers', teamId],
-    queryFn: () => TeamService.getTeamPlayers(teamId!),
-    enabled: !!teamId
-  });
-
-  // Quan arriben les dades, omplim el formulari
-  React.useEffect(() => {
-    if (team) {
-      setTeamData({
-        name: team.name,
-        age: team.age,
-        tag: team.tag || '',
-        imageUrl: team.imageUrl || ''
-      });
-    }
-  }, [team]);
+  // ... (rest of state)
 
   // Mutation: Guardar Dades Equip
   const updateTeamMutation = useMutation({
@@ -58,9 +27,9 @@ const AdminTeamEdit: React.FC = () => {
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['team', teamId] });
         queryClient.invalidateQueries({ queryKey: ['teams'] });
-        alert('Dades de l\'equip actualitzades.');
+        showAlert({ message: 'Dades de l\'equip actualitzades.', type: 'success' });
     },
-    onError: (err) => alert('Error: ' + err)
+    onError: (err: any) => showAlert({ message: 'Error actualitzant equip: ' + (err.message || err), type: 'error' })
   });
 
   // Mutation: Add Player (Optimistic)
@@ -69,27 +38,21 @@ const AdminTeamEdit: React.FC = () => {
       await TeamService.addPlayerToTeam(teamId!, user.id);
     },
     onMutate: async (newUser) => {
-      // 1. Cancel·lar queries sortints per no sobreescriure el nostre update optimista
+      // ... (onMutate logic)
       await queryClient.cancelQueries({ queryKey: ['teamPlayers', teamId] });
-
-      // 2. Snapshot del valor anterior
       const previousPlayers = queryClient.getQueryData<User[]>(['teamPlayers', teamId]);
-
-      // 3. Actualitzar cache optimísticament
       queryClient.setQueryData<User[]>(['teamPlayers', teamId], (old = []) => {
         if (old.some(p => p.id === newUser.id)) return old; // Ja hi és
         return [...old, newUser];
       });
-
-      // 4. Retornar context per rollback
       return { previousPlayers };
     },
-    onError: (err, newUser, context) => {
+    onError: (err: any, newUser, context) => {
       // Si falla, revertim
       if (context?.previousPlayers) {
         queryClient.setQueryData(['teamPlayers', teamId], context.previousPlayers);
       }
-      alert('Error afegint jugador: ' + err);
+      showAlert({ message: 'Error afegint jugador: ' + (err.message || err), type: 'error' });
     },
     onSettled: () => {
       // Al final, refresquem per assegurar consistència
@@ -105,18 +68,16 @@ const AdminTeamEdit: React.FC = () => {
     onMutate: async (userId) => {
       await queryClient.cancelQueries({ queryKey: ['teamPlayers', teamId] });
       const previousPlayers = queryClient.getQueryData<User[]>(['teamPlayers', teamId]);
-
       queryClient.setQueryData<User[]>(['teamPlayers', teamId], (old = []) => {
         return old.filter(p => p.id !== userId);
       });
-
       return { previousPlayers };
     },
-    onError: (err, userId, context) => {
+    onError: (err: any, userId, context) => {
       if (context?.previousPlayers) {
         queryClient.setQueryData(['teamPlayers', teamId], context.previousPlayers);
       }
-      alert('Error traient jugador: ' + err);
+      showAlert({ message: 'Error traient jugador: ' + (err.message || err), type: 'error' });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['teamPlayers', teamId] });

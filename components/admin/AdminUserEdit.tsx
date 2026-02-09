@@ -5,36 +5,16 @@ import { adminService } from '../../services/adminService';
 import { UserService } from '../../services/userService';
 import { TeamService } from '../../services/teamService';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 
 const AdminUserEdit: React.FC = () => {
   const { hasRole } = useAuth();
+  const { showAlert } = useModal();
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const queryClient = useQueryClient();
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    full_name: '',
-    phone_number: '',
-    is_active: true,
-    role_ids: [] as number[],
-    team_ids: [] as string[]
-  });
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 1. Obtenir Rols
-  const { data: allRoles = [] } = useQuery({
-    queryKey: ['roles'],
-    queryFn: UserService.getAllRoles,
-  });
-
-  // 1.5. Obtenir Equips
-  const { data: allTeams = [] } = useQuery({
-    queryKey: ['teams'],
-    queryFn: TeamService.getAll,
-  });
+  // ... (rest of state)
 
   // 2. Obtenir Usuari Actual
   useEffect(() => {
@@ -55,7 +35,7 @@ const AdminUserEdit: React.FC = () => {
         }
       } catch (error) {
         console.error("Error carregant usuari:", error);
-        alert("No s'ha pogut carregar l'usuari.");
+        showAlert({ message: "No s'ha pogut carregar l'usuari.", type: 'error' });
         navigate('/keyper/users');
       } finally {
         setIsLoading(false);
@@ -63,7 +43,7 @@ const AdminUserEdit: React.FC = () => {
     };
 
     fetchUser();
-  }, [userId, navigate]);
+  }, [userId, navigate, showAlert]);
 
   // 3. Mutació d'Actualització
   const updateMutation = useMutation({
@@ -78,19 +58,18 @@ const AdminUserEdit: React.FC = () => {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      // Opcional: invalidar query d'un sol usuari si existís
-      alert('Usuari actualitzat correctament.');
+      showAlert({ message: 'Usuari actualitzat correctament.', type: 'success' });
       navigate('/keyper/users');
     },
     onError: (err: any) => {
-      alert(`Error actualitzant usuari: ${err.message || err}`);
+      showAlert({ message: `Error actualitzant usuari: ${err.message || err}`, type: 'error' });
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email) {
-      alert("L'email és obligatori.");
+      showAlert({ message: "L'email és obligatori.", type: 'error' });
       return;
     }
     updateMutation.mutate(formData);

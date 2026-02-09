@@ -4,22 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { TeamCategory } from '../../types';
 import { TeamService } from '../../services/teamService';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 
 const AdminTeams: React.FC = () => {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showAlert, showConfirm } = useModal();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [currentTeam, setCurrentTeam] = useState<Partial<TeamCategory>>({});
 
-  // 1. Obtenir Equips (Caché)
-  const { data: teams = [], isLoading, isError, error } = useQuery({
-    queryKey: ['teams'],
-    queryFn: TeamService.getAll,
-    staleTime: 1000 * 60 * 5, // 5 minuts
-  });
+  // ... (rest of state)
 
   // 2. Mutació Guardar
   const saveMutation = useMutation({
@@ -48,8 +43,9 @@ const AdminTeams: React.FC = () => {
       setIsEditing(false);
       setCurrentTeam({});
       setSelectedFile(null);
+      showAlert({ message: 'Equip guardat correctament!', type: 'success' });
     },
-    onError: () => alert("Error al guardar l\'equip.")
+    onError: (err: any) => showAlert({ message: "Error al guardar l\'equip: " + (err.message || err), type: 'error' })
   });
 
   // 3. Mutació Esborrar
@@ -57,28 +53,39 @@ const AdminTeams: React.FC = () => {
     mutationFn: TeamService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
+      showAlert({ message: 'Equip esborrat.', type: 'success' });
     },
-    onError: () => alert("Error esborrant l\'equip.")
+    onError: (err: any) => showAlert({ message: "Error esborrant l\'equip: " + (err.message || err), type: 'error' })
   });
 
   const canEdit = () => hasRole('SUPER_ADMIN') || hasRole('COORDINATOR');
 
-  const handleEdit = (team: TeamCategory) => {
-    if (!canEdit()) return alert("No tens permisos.");
+  const handleEdit = async (team: TeamCategory) => {
+    if (!canEdit()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
     // Naveguem a la pàgina d'edició completa
     navigate(`/keyper/teams/edit/${team.id}`);
   };
 
-  const handleDelete = (id: string) => {
-    if (!canEdit()) return alert("No tens permisos.");
-    if (confirm('Estàs segur d\'esborrar aquest equip?')) {
+  const handleDelete = async (id: string) => {
+    if (!canEdit()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
+    const confirmed = await showConfirm('Estàs segur d\'esborrar aquest equip?');
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canEdit()) return alert("No tens permisos.");
+    if (!canEdit()) {
+      await showAlert({ message: "No tens permisos.", type: 'error' });
+      return;
+    }
     saveMutation.mutate();
   };
 

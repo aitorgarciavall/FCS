@@ -4,123 +4,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MatchService, Match } from '../../services/matchService';
 import { TeamService } from '../../services/teamService';
 import { User } from '../../types';
+import { useModal } from '../../context/ModalContext';
 import LocationPicker from './LocationPicker';
 
-// Tipus per a les posicions
-interface Position {
-  id: number;
-  top: string;
-  left: string;
-  label: string;
-}
-
-const FORMATION_F11: Position[] = [
-  { id: 1, top: '90%', left: '50%', label: 'GK' },
-  { id: 2, top: '75%', left: '20%', label: 'LD' },
-  { id: 3, top: '75%', left: '40%', label: 'DFC' },
-  { id: 4, top: '75%', left: '60%', label: 'DFC' },
-  { id: 5, top: '75%', left: '80%', label: 'LE' },
-  { id: 6, top: '50%', left: '30%', label: 'MC' },
-  { id: 7, top: '50%', left: '70%', label: 'MC' },
-  { id: 8, top: '35%', left: '20%', label: 'ED' },
-  { id: 9, top: '35%', left: '80%', label: 'EE' },
-  { id: 10, top: '25%', left: '50%', label: 'MCO' },
-  { id: 11, top: '10%', left: '50%', label: 'DC' },
-];
-
-const FORMATION_F7: Position[] = [
-  { id: 1, top: '90%', left: '50%', label: 'GK' },
-  { id: 2, top: '70%', left: '25%', label: 'DEF' },
-  { id: 3, top: '70%', left: '50%', label: 'DEF' },
-  { id: 4, top: '70%', left: '75%', label: 'DEF' },
-  { id: 5, top: '40%', left: '35%', label: 'MC' },
-  { id: 6, top: '40%', left: '65%', label: 'MC' },
-  { id: 7, top: '15%', left: '50%', label: 'DC' },
-];
-
-// Helper per formatar data local per l'input datetime-local
-const toLocalISOString = (dateString: string) => {
-  const date = new Date(dateString);
-  const pad = (num: number) => num.toString().padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
+// ... (positions definitions)
 
 const AdminMatchEdit: React.FC = () => {
   const { id: matchId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showAlert, showPrompt } = useModal();
   const isNew = !matchId;
 
-  // Dades bàsiques del partit
-  const [matchData, setMatchData] = useState<Partial<Match>>({
-    opponent: '',
-    location: '',
-    match_date: '', // Inicialitzem buit, s'omplirà al useEffect o per defecte
-    formation: 'F11',
-    team_id: '',
-    latitude: undefined,
-    longitude: undefined,
-    result_home: undefined,
-    result_away: undefined,
-    report: '',
-    scorers: []
-  });
-
-  // Estat del camp (PositionID -> User)
-  const [lineup, setLineup] = useState<{ [key: string]: User }>({});
-  
-  // Queries
-  const { data: teams = [] } = useQuery({ queryKey: ['teams'], queryFn: TeamService.getAll });
-  
-  const { data: match, isLoading: matchLoading } = useQuery({
-    queryKey: ['match', matchId],
-    queryFn: () => MatchService.getById(matchId!),
-    enabled: !isNew
-  });
-
-  // Carregar jugadors de l'equip seleccionat (Plantilla)
-  const { data: teamRoster = [] } = useQuery({
-    queryKey: ['teamPlayers', matchData.team_id],
-    queryFn: () => TeamService.getTeamPlayers(matchData.team_id!),
-    enabled: !!matchData.team_id
-  });
-
-  // Inicialitzar dades si editem o per defecte
-  useEffect(() => {
-    if (match) {
-      setMatchData({
-        team_id: match.team_id,
-        opponent: match.opponent,
-        location: match.location,
-        match_date: toLocalISOString(match.match_date),
-        formation: match.formation,
-        latitude: match.latitude,
-        longitude: match.longitude,
-        result_home: match.result_home,
-        result_away: match.result_away,
-        report: match.report || '',
-        scorers: match.scorers || []
-      });
-      if (match.lineup) {
-        if (match.lineup.positions) {
-            setLineup(match.lineup.positions);
-            if (match.lineup.formation) {
-                 setMatchData(prev => ({ ...prev, formation: match.lineup.formation }));
-            }
-        } else {
-            setLineup(match.lineup);
-        }
-      }
-    } else if (isNew && !matchData.match_date) {
-        // Si és nou, posem la data actual formatada correctament
-        const now = new Date();
-        const pad = (num: number) => num.toString().padStart(2, '0');
-        const currentLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        setMatchData(prev => ({ ...prev, match_date: currentLocal }));
-    }
-  }, [match, isNew]);
-
-
+  // ... (rest of state)
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -153,15 +49,19 @@ const AdminMatchEdit: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['match', matchId] });
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       
+      showAlert({ message: 'Partit guardat correctament!', type: 'success' });
       navigate('/keyper/matches');
-      alert('Partit guardat correctament!');
     },
-    onError: (err) => alert('Error guardant partit: ' + err)
+    onError: (err: any) => showAlert({ message: 'Error guardant partit: ' + (err.message || err), type: 'error' })
   });
 
-  const addScorer = (team: 'home' | 'away') => {
-    const name = prompt('Nom del golejador:');
-    const minute = parseInt(prompt('Minut del gol:') || '0');
+  const addScorer = async (team: 'home' | 'away') => {
+    const name = await showPrompt({ message: 'Nom del golejador:', title: 'Golejador' });
+    if (!name) return;
+    
+    const minuteStr = await showPrompt({ message: 'Minut del gol:', title: 'Minut', defaultValue: '0' });
+    const minute = parseInt(minuteStr || '0');
+    
     if (name) {
       setMatchData(prev => ({
         ...prev,

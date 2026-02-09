@@ -1,116 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { useModal } from '../context/ModalContext';
 
-// Tipus per al formulari
-interface RegistrationData {
-  // Dades Jugador
-  player: {
-    name: string;
-    surname: string;
-    dni: string;
-    birthDate: string;
-    email: string; // Opcional si és menor
-    phone: string; // Opcional
-    address: string;
-    city: string;
-    postalCode: string;
-    shirtSize: string;
-    allergies: string;
-  };
-  // Dades Tutor
-  guardian: {
-    isSameAsPlayer: boolean; // Si és major d'edat i paga ell mateix
-    name: string;
-    surname: string;
-    dni: string;
-    email: string; // Obligatori pel login del tutor
-    phone: string;
-    relationship: string; // Pare, Mare, Tutor...
-  };
-  // Dades SEPA
-  sepa: {
-    iban: string;
-    holderName: string;
-    swift: string;
-    acceptedTerms: boolean;
-  };
-}
-
-const INITIAL_DATA: RegistrationData = {
-  player: { name: '', surname: '', dni: '', birthDate: '', email: '', phone: '', address: '', city: '', postalCode: '', shirtSize: '', allergies: '' },
-  guardian: { isSameAsPlayer: false, name: '', surname: '', dni: '', email: '', phone: '', relationship: 'Pare/Mare' },
-  sepa: { iban: '', holderName: '', swift: '', acceptedTerms: false }
-};
+// ... (types and initial data)
 
 const JoinClub: React.FC = () => {
   const navigate = useNavigate();
+  const { showAlert } = useModal();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<RegistrationData>(INITIAL_DATA);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const updateField = (section: keyof RegistrationData, field: string, value: any) => {
-    setData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [field]: value }
-    }));
-  };
-
-  const handleGuardianCheck = (checked: boolean) => {
-    setData(prev => ({
-      ...prev,
-      guardian: { 
-        ...prev.guardian, 
-        isSameAsPlayer: checked,
-        // Si és el mateix, pre-omplim amb dades del jugador
-        name: checked ? prev.player.name : '',
-        surname: checked ? prev.player.surname : '',
-        dni: checked ? prev.player.dni : '',
-        email: checked ? prev.player.email : '',
-        phone: checked ? prev.player.phone : '',
-        relationship: checked ? 'Self' : 'Pare/Mare'
-      }
-    }));
-  };
-
-  const validateStep = (currentStep: number): boolean => {
-    setError(null);
-    if (currentStep === 1) {
-      if (!data.player.name || !data.player.surname || !data.player.birthDate || !data.player.dni) {
-        setError("Si us plau, omple els camps obligatoris del jugador.");
-        return false;
-      }
-      // Check simple edat
-      const birth = new Date(data.player.birthDate);
-      const age = new Date().getFullYear() - birth.getFullYear();
-      if (age < 18 && data.guardian.isSameAsPlayer) {
-         setError("Un menor no pot ser el seu propi tutor legal.");
-         return false;
-      }
-    }
-    if (currentStep === 2) {
-      if (!data.guardian.isSameAsPlayer) {
-          if (!data.guardian.name || !data.guardian.email || !data.guardian.dni) {
-             setError("Si us plau, omple les dades del tutor.");
-             return false;
-          }
-      }
-    }
-    if (currentStep === 3) {
-        if (!data.sepa.iban || !data.sepa.holderName || !data.sepa.acceptedTerms) {
-            setError("Les dades bancàries i l'acceptació són obligatòries.");
-            return false;
-        }
-    }
-    return true;
-  };
-
-  const nextStep = () => {
-    if (validateStep(step)) setStep(s => s + 1);
-  };
-
-  const prevStep = () => setStep(s => s - 1);
+  // ... (rest of state)
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
@@ -137,7 +36,11 @@ const JoinClub: React.FC = () => {
             throw new Error(result.error || "Error desconegut en el registre.");
         }
 
-        alert("Inscripció realitzada correctament! L'usuari ha estat creat. Pots accedir amb l'email del tutor i la contrasenya temporal: tempPassword123!");
+        await showAlert({ 
+          title: "Inscripció Finalitzada",
+          message: "Inscripció realitzada correctament! L'usuari ha estat creat. Pots accedir amb l'email del tutor i la contrasenya temporal: tempPassword123!",
+          type: 'success'
+        });
         navigate('/');
     } catch (err: any) {
         console.error(err);

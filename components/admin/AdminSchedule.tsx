@@ -1,63 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useUserRoles } from '../../hooks/useUserRoles';
+import { useModal } from '../../context/ModalContext';
 import { scheduleService } from '../../services/scheduleService';
 import { TrainingSession } from '../../types';
 
 const AdminSchedule: React.FC = () => {
   const { user } = useAuth();
+  const { showAlert, showConfirm } = useModal();
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    day_of_week: 1,
-    start_time: '17:00',
-    end_time: '18:00',
-    team_name: '',
-    field_name: ''
-  });
-
-  useEffect(() => {
-    loadSchedule();
-  }, []);
-
-  const loadSchedule = async () => {
-    try {
-      const data = await scheduleService.getSchedule();
-      setSessions(data);
-    } catch (error) {
-      console.error('Error loading schedule:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (session: TrainingSession) => {
-    setEditingId(session.id);
-    setFormData({
-      day_of_week: session.day_of_week,
-      start_time: session.start_time.slice(0, 5),
-      end_time: session.end_time.slice(0, 5),
-      team_name: session.team_name,
-      field_name: session.field_name || ''
-    });
-    // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setFormData({
-      day_of_week: 1,
-      start_time: '17:00',
-      end_time: '18:00',
-      team_name: '',
-      field_name: ''
-    });
-  };
+  // ... (rest of state)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,22 +34,25 @@ const AdminSchedule: React.FC = () => {
 
       await loadSchedule();
       setFormData(prev => ({ ...prev, team_name: '', field_name: '' }));
-    } catch (error) {
-      alert('Error guardant la sessió.');
+      showAlert({ message: 'Horari guardat correctament!', type: 'success' });
+    } catch (error: any) {
+      showAlert({ message: 'Error guardant la sessió: ' + (error.message || error), type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Segur que vols eliminar aquesta sessió?')) return;
+    const confirmed = await showConfirm('Segur que vols eliminar aquesta sessió?');
+    if (!confirmed) return;
     try {
       await scheduleService.deleteSession(id);
       setSessions(prev => prev.filter(s => s.id !== id));
       if (editingId === id) cancelEdit();
-    } catch (error) {
+      showAlert({ message: 'Sessió eliminada.', type: 'success' });
+    } catch (error: any) {
       console.error('Error deleting:', error);
-      alert('Error eliminant la sessió.');
+      showAlert({ message: 'Error eliminant la sessió: ' + (error.message || error), type: 'error' });
     }
   };
 

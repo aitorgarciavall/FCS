@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MatchService } from '../../services/matchService';
+import { useModal } from '../../context/ModalContext';
 
 const AdminMatches: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showAlert, showConfirm } = useModal();
 
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ['matches'],
@@ -15,11 +17,12 @@ const AdminMatches: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: MatchService.delete,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['matches'] }),
-    onError: (err) => alert('Error esborrant partit')
+    onError: (err: any) => showAlert({ message: 'Error esborrant partit: ' + (err.message || err), type: 'error' })
   });
 
-  const handleDelete = (id: string) => {
-    if (confirm('Segur que vols esborrar aquest partit?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirm('Segur que vols esborrar aquest partit?');
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

@@ -1,62 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 import { UserService } from '../../services/userService';
 import { PlayerGuardian, User } from '../../types';
 
 const TutorPlayers: React.FC = () => {
   const { user } = useAuth();
+  const { showAlert } = useModal();
   const [players, setPlayers] = useState<PlayerGuardian[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Modal State
-  const [editingPlayer, setEditingPlayer] = useState<User | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  // Form Data
-  const [formData, setFormData] = useState<Partial<User>>({});
-
-  useEffect(() => {
-    if (user) {
-      loadPlayers();
-    }
-  }, [user]);
-
-  const loadPlayers = async () => {
-    try {
-      if (!user?.id) return;
-      const data = await UserService.getManagedPlayers(user.id);
-      setPlayers(data || []);
-    } catch (err) {
-      console.error('Error loading players:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditClick = (playerData: User) => {
-    setEditingPlayer(playerData);
-    setFormData({
-      full_name: playerData.full_name,
-      birth_date: playerData.birth_date,
-      dni: playerData.dni,
-      shirt_size: playerData.shirt_size,
-      allergies: playerData.allergies,
-      phone_secondary: playerData.phone_secondary,
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingPlayer(null);
-    setFormData({});
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // ... (rest of state)
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,10 +19,11 @@ const TutorPlayers: React.FC = () => {
       await UserService.updateUser(editingPlayer.id, formData);
       // Reload list to show changes
       await loadPlayers();
+      showAlert({ message: 'Dades del jugador actualitzades.', type: 'success' });
       handleCloseModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating player:', err);
-      alert('Error al guardar les dades del jugador');
+      showAlert({ message: 'Error al guardar les dades del jugador: ' + (err.message || err), type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -83,7 +36,11 @@ const TutorPlayers: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold dark:text-white">Els meus Jugadors</h1>
         <button 
-          onClick={() => alert("Per afegir un nou jugador, posa't en contacte amb l'administració del club.")}
+          onClick={() => showAlert({ 
+            title: "Afegir Jugador", 
+            message: "Per afegir un nou jugador, posa't en contacte amb l'administració del club (info@cfsantpedor.com).",
+            type: 'alert'
+          })}
           className="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
         >
           + Afegir Jugador

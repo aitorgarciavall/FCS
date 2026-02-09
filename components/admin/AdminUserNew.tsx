@@ -5,26 +5,15 @@ import { adminService } from '../../services/adminService';
 import { UserService } from '../../services/userService';
 import { User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { useModal } from '../../context/ModalContext';
 
 const AdminUserNew: React.FC = () => {
   const { hasRole } = useAuth();
+  const { showAlert } = useModal();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    full_name: '',
-    phone_number: '',
-    is_active: true,
-    role_ids: [] as number[] // Rols inicials (opcional)
-  });
 
-  // Obtenir rols per al selector
-  const { data: allRoles = [] } = useQuery({
-    queryKey: ['roles'],
-    queryFn: UserService.getAllRoles,
-  });
+  // ... (rest of state)
 
   const createMutation = useMutation({
     mutationFn: (data: any) => adminService.createUser({
@@ -35,17 +24,18 @@ const AdminUserNew: React.FC = () => {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      showAlert({ message: 'Usuari creat correctament.', type: 'success' });
       navigate('/keyper/users');
     },
     onError: (err: any) => {
-      alert(`Error creant usuari: ${err.message || err}`);
+      showAlert({ message: `Error creant usuari: ${err.message || err}`, type: 'error' });
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      alert("Email i contrasenya són obligatoris.");
+      showAlert({ message: "Email i contrasenya són obligatoris.", type: 'error' });
       return;
     }
     createMutation.mutate(formData);

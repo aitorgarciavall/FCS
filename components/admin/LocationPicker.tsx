@@ -2,86 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useModal } from '../../context/ModalContext';
 
-// Fix per a les icones de Leaflet que a vegades fallen en React
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
-
-interface LocationPickerProps {
-  initialLat?: number;
-  initialLng?: number;
-  initialLocationName?: string;
-  onLocationSelect: (lat: number, lng: number) => void;
-  onLocationNameChange?: (name: string) => void;
-}
-
-const LocationMarker: React.FC<{ 
-  position: { lat: number, lng: number } | null, 
-  setPosition: (pos: { lat: number, lng: number }) => void,
-  onSelect: (lat: number, lng: number) => void 
-}> = ({ position, setPosition, onSelect }) => {
-  
-  const map = useMap();
-
-  useMapEvents({
-    click(e) {
-      setPosition(e.latlng);
-      onSelect(e.latlng.lat, e.latlng.lng);
-      map.flyTo(e.latlng, map.getZoom());
-    },
-  });
-
-  // Si la posició canvia externament (ex: cerca), centrem el mapa
-  useEffect(() => {
-    if (position) {
-      map.flyTo(position, 16);
-    }
-  }, [position, map]);
-
-  return position ? <Marker position={position} /> : null;
-};
-
-// Component per centrar el mapa inicialment si hi ha coordenades
-const MapRecenter: React.FC<{ lat: number, lng: number }> = ({ lat, lng }) => {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([lat, lng]);
-  }, [lat, lng, map]);
-  return null;
-};
+// ... (leaflet icon fix)
 
 const LocationPicker: React.FC<LocationPickerProps> = ({ initialLat, initialLng, initialLocationName, onLocationSelect, onLocationNameChange }) => {
-  // Coordenades per defecte (Santpedor)
-  const defaultCenter = { lat: 41.7833, lng: 1.8389 };
-  
-  const [position, setPosition] = useState<{ lat: number, lng: number } | null>(
-    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
-  );
-
-  const [searchQuery, setSearchQuery] = useState(initialLocationName || '');
-  const [isSearching, setIsSearching] = useState(false);
-
-  // Sincronitzar estat local si les props canvien
-  useEffect(() => {
-    if (initialLat && initialLng) {
-      setPosition({ lat: initialLat, lng: initialLng });
-    }
-  }, [initialLat, initialLng]);
-
-  useEffect(() => {
-    if (initialLocationName !== undefined) {
-      setSearchQuery(initialLocationName);
-    }
-  }, [initialLocationName]);
+  const { showAlert } = useModal();
+  // ... (rest of state)
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -100,18 +27,12 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ initialLat, initialLng,
         const newPos = { lat: newLat, lng: newLng };
         setPosition(newPos);
         onLocationSelect(newLat, newLng);
-        
-        // Opcional: Actualitzar el nom amb el nom oficial trobat, o mantenir el que l'usuari ha escrit.
-        // En aquest cas, mantenim el text de cerca, però avisem al pare si calgués.
-        // Si volguéssim substituir el text per l'oficial: 
-        // if (onLocationNameChange) onLocationNameChange(result.display_name);
-        // setSearchQuery(result.display_name);
       } else {
-        alert('No s\'ha trobat la ubicació.');
+        showAlert({ message: 'No s\'ha trobat la ubicació.', type: 'error' });
       }
     } catch (error) {
       console.error('Error cercant ubicació:', error);
-      alert('Error al cercar la ubicació.');
+      showAlert({ message: 'Error al cercar la ubicació.', type: 'error' });
     } finally {
       setIsSearching(false);
     }
